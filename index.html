@@ -570,12 +570,27 @@
             background: #FFEDD5 !important;
         }
 
+        /* Keep product totals in a dedicated horizontal footer row, aligned with each column. */
+        .matrix-table tfoot {
+            display: table-footer-group;
+        }
+
+        .matrix-table tfoot tr {
+            display: table-row;
+        }
+
+        .matrix-table tfoot td {
+            display: table-cell;
+            white-space: nowrap;
+        }
+
         .matrix-table tr.matrix-total-row td {
             background: #FFEDD5 !important;
             color: #EA580C !important;
             font-weight: 800 !important;
             height: 46px;
             border-top: 2px solid #F97316 !important;
+            white-space: nowrap;
         }
 
         .matrix-table tr.matrix-total-row td:first-child {
@@ -893,6 +908,10 @@
                 </div>
             </div>
             <div class="header-actions">
+                <span id="firebaseStatus" title="حالة مزامنة Firebase" style="display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:8px;background:rgba(255,255,255,.18);font-size:.78rem;font-weight:700;white-space:nowrap;">
+                    <span id="firebaseStatusDot" style="width:8px;height:8px;border-radius:50%;background:#FDE68A;display:inline-block;"></span>
+                    <span id="firebaseStatusText">جاري الاتصال...</span>
+                </span>
                 <button class="btn btn-header btn-sm" onclick="exportToPDF()">📄 تصدير PDF</button>
                 <button class="btn btn-header btn-sm" onclick="exportToExcel()">📊 تصدير Excel</button>
                 <button class="btn btn-header btn-sm" onclick="downloadBackupJSON()">💾 نسخة احتياطية</button>
@@ -1049,6 +1068,7 @@
                                oninput="filterGenericDropdown('valueSearchInput', 'valueSearchList', () => renderReturnsValueTable())"
                                onkeydown="handleGenericKeydown(event, 'valueSearchList')">
                         <div id="valueSearchList" class="search-dropdown-list"></div>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="exportReturnsValueToPDF()">📄 تصدير PDF لملخص القيمة</button>
                     </div>
                 </div>
 
@@ -1258,12 +1278,27 @@
             lastBackup: null
         };
 
+        function getLocalDateString(date = new Date()) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function toSafeNumber(value, fallback = 0) {
+            const n = Number(value);
+            return Number.isFinite(n) ? n : fallback;
+        }
+
         function buildFullOpeningMap(clients, products, partialMap) {
             const full = {};
+            const source = partialMap && typeof partialMap === 'object' ? partialMap : {};
             clients.forEach(c => {
                 full[c] = {};
                 products.forEach(p => {
-                    full[c][p] = (partialMap[c] && typeof partialMap[c][p] === 'number') ? partialMap[c][p] : 0;
+                    const raw = source[c] && source[c][p] !== undefined ? source[c][p] : 0;
+                    const value = toSafeNumber(raw, 0);
+                    full[c][p] = value > 0 ? value : 0;
                 });
             });
             return full;
@@ -1272,8 +1307,9 @@
         function buildPricesMap(products, savedPrices) {
             const prices = {};
             products.forEach(p => {
-                if (savedPrices && typeof savedPrices[p] === 'number') {
-                    prices[p] = savedPrices[p];
+                const saved = savedPrices && savedPrices[p] !== undefined ? Number(savedPrices[p]) : NaN;
+                if (Number.isFinite(saved) && saved >= 0) {
+                    prices[p] = saved;
                 } else if (DEFAULT_UNIT_PRICES[p] !== undefined) {
                     prices[p] = DEFAULT_UNIT_PRICES[p];
                 } else {
@@ -1283,33 +1319,62 @@
             return prices;
         }
 
+        function normalizeAppState(rawState = {}) {
+            const clients = Array.isArray(rawState.clients) ? rawState.clients.filter(v => typeof v === 'string' && v.trim()) : [...DEFAULT_CLIENTS];
+            const products = Array.isArray(rawState.products) ? rawState.products.filter(v => typeof v === 'string' && v.trim()) : [...DEFAULT_PRODUCTS];
+            const movements = Array.isArray(rawState.movements) ? rawState.movements.map((m, index) => {
+                const items = {};
+                Object.entries(m && m.items && typeof m.items === 'object' ? m.items : {}).forEach(([product, quantity]) => {
+                    const q = toSafeNumber(quantity, 0);
+                    if (q > 0) items[product] = q;
+                });
+                const calculatedTotal = Object.values(items).reduce((sum, q) => sum + q, 0);
+                return {
+                    id: String((m && m.id) || `LEGACY-${index}-${Date.now()}`),
+                    date: String((m && m.date) || getLocalDateString()),
+                    type: m && (m.type === 'RETURN' || m.type === 'SENT') ? m.type : 'RETURN',
+                    client: String((m && m.client) || ''),
+                    items,
+                    totalQty: calculatedTotal,
+                    note: String((m && m.note) || ''),
+                    createdAt: (m && m.createdAt) || null
+                };
+            }) : [];
+            movements.sort((a, b) => {
+                const ta = a.createdAt ? new Date(a.createdAt).getTime() : new Date(`${a.date}T00:00:00`).getTime();
+                const tb = b.createdAt ? new Date(b.createdAt).getTime() : new Date(`${b.date}T00:00:00`).getTime();
+                return (Number.isFinite(tb) ? tb : 0) - (Number.isFinite(ta) ? ta : 0);
+            });
+
+            return {
+                openingDate: rawState.openingDate || '2026-11-22',
+                clients,
+                products,
+                unitPrices: buildPricesMap(products, rawState.unitPrices),
+                // Rebuild the map on every load so newly added/renamed items cannot disappear from calculations.
+                openingBalances: buildFullOpeningMap(clients, products, rawState.openingBalances),
+                movements,
+                lastBackup: rawState.lastBackup || null
+            };
+        }
+
         function loadState() {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
                 try {
-                    const parsed = JSON.parse(saved);
-                    const clients = parsed.clients || [...DEFAULT_CLIENTS];
-                    const products = parsed.products || [...DEFAULT_PRODUCTS];
-                    appState = {
-                        openingDate: parsed.openingDate || '2026-11-22',
-                        clients,
-                        products,
-                        unitPrices: buildPricesMap(products, parsed.unitPrices),
-                        openingBalances: parsed.openingBalances || buildFullOpeningMap(clients, products, DEFAULT_OPENING_22_11_2026),
-                        movements: parsed.movements || [],
-                        lastBackup: parsed.lastBackup || null
-                    };
+                    appState = normalizeAppState(JSON.parse(saved));
                 } catch (e) {
+                    console.error('Local data could not be parsed. Loading defaults.', e);
                     initDefaultState();
                 }
             } else {
                 initDefaultState();
             }
-            checkBackupReminder();
+            persistLocalState();
         }
 
         function initDefaultState() {
-            appState = {
+            appState = normalizeAppState({
                 openingDate: '2026-11-22',
                 clients: [...DEFAULT_CLIENTS],
                 products: [...DEFAULT_PRODUCTS],
@@ -1317,30 +1382,72 @@
                 openingBalances: buildFullOpeningMap(DEFAULT_CLIENTS, DEFAULT_PRODUCTS, DEFAULT_OPENING_22_11_2026),
                 movements: [],
                 lastBackup: new Date().toISOString()
-            };
-            saveState();
+            });
+            persistLocalState();
         }
 
-        function saveState() {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+        function persistLocalState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            } catch (error) {
+                console.error('Local storage save failed:', error);
+                showToast('⚠️ تعذر حفظ نسخة محلية؛ تحقق من مساحة المتصفح');
+            }
             checkBackupReminder();
+        }
+
+        function saveState(syncOptions = {}) {
+            persistLocalState();
+            const sync = window.fondantFirebaseSync;
+            if (!sync || !sync.isReady()) return;
+
+            sync.saveConfig().catch(error => console.error('Firebase config sync failed:', error));
+            if (syncOptions.movementUpsert) {
+                sync.upsertMovement(syncOptions.movementUpsert).catch(error => console.error('Firebase movement sync failed:', error));
+            }
+            if (syncOptions.movementDeleteId) {
+                sync.deleteMovement(syncOptions.movementDeleteId).catch(error => console.error('Firebase movement delete failed:', error));
+            }
+            if (syncOptions.replaceAllMovements) {
+                sync.replaceAllMovements().catch(error => console.error('Firebase movement resync failed:', error));
+            }
         }
 
         function checkBackupReminder() {
             const banner = document.getElementById('backupBanner');
+            if (!banner) return;
             if (!appState.lastBackup) {
                 banner.style.display = 'flex';
                 return;
             }
-            const diffHours = (Date.now() - new Date(appState.lastBackup).getTime()) / (1000 * 60 * 60);
+            const backupTime = new Date(appState.lastBackup).getTime();
+            const diffHours = Number.isFinite(backupTime) ? (Date.now() - backupTime) / (1000 * 60 * 60) : Infinity;
             banner.style.display = diffHours >= 24 ? 'flex' : 'none';
+        }
+
+        function escapeHtmlAttribute(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
         }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
+            if (!t) return;
             t.textContent = msg;
             t.classList.add('show');
             setTimeout(() => t.classList.remove('show'), 3200);
+        }
+
+        function refreshAllViews() {
+            if (!document.getElementById('dashboardMatrixTable')) return;
+            renderDashboardMatrix();
+            renderMovementItemsGrid();
+            renderReturnsValueTable();
+            renderHistoryTable();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            updateMovementUI();
         }
 
         function calculateBalances() {
@@ -1348,37 +1455,47 @@
             const returned = {};
             const sent = {};
             const remaining = {};
+            const pending = {};
 
             appState.clients.forEach(c => {
                 opening[c] = {};
                 returned[c] = {};
                 sent[c] = {};
                 remaining[c] = {};
+                pending[c] = {};
                 appState.products.forEach(p => {
-                    const opVal = (appState.openingBalances[c] && appState.openingBalances[c][p]) ? Number(appState.openingBalances[c][p]) : 0;
+                    const opVal = toSafeNumber(appState.openingBalances[c] && appState.openingBalances[c][p], 0);
                     opening[c][p] = opVal;
                     returned[c][p] = 0;
                     sent[c][p] = 0;
                     remaining[c][p] = opVal;
+                    pending[c][p] = Math.max(0, opVal);
                 });
             });
 
             appState.movements.forEach(m => {
-                if (!remaining[m.client]) return;
+                if (!m || !remaining[m.client] || (m.type !== 'RETURN' && m.type !== 'SENT')) return;
+                if (m.date && appState.openingDate && m.date < appState.openingDate) return;
                 Object.entries(m.items || {}).forEach(([prod, qty]) => {
-                    const q = Number(qty) || 0;
-                    if (q <= 0 || remaining[m.client][prod] === undefined) return;
+                    const q = toSafeNumber(qty, 0);
+                    if (q <= 0 || !Object.prototype.hasOwnProperty.call(remaining[m.client], prod)) return;
                     if (m.type === 'RETURN') {
                         returned[m.client][prod] += q;
                         remaining[m.client][prod] += q;
-                    } else if (m.type === 'SENT') {
+                    } else {
                         sent[m.client][prod] += q;
                         remaining[m.client][prod] -= q;
                     }
                 });
             });
 
-            return { opening, returned, sent, remaining };
+            // Pending is gross outstanding by client + product. A negative cell (over-delivery)
+            // must never cancel another client's positive balance in the grand total.
+            appState.clients.forEach(c => appState.products.forEach(p => {
+                pending[c][p] = Math.max(0, remaining[c][p]);
+            }));
+
+            return { opening, returned, sent, remaining, pending };
         }
 
         function switchTab(tabId, btnEl) {
@@ -1456,7 +1573,7 @@
 
         // 1. لوحة المتابعة والمصفوفة المنسقة أفقياً بالكامل
         function renderDashboardMatrix() {
-            const { opening, returned, sent, remaining } = calculateBalances();
+            const { opening, returned, sent, remaining, pending } = calculateBalances();
             let grandOpening = 0, grandReturned = 0, grandSent = 0, grandRemaining = 0;
 
             appState.clients.forEach(c => {
@@ -1464,7 +1581,7 @@
                     grandOpening += opening[c][p];
                     grandReturned += returned[c][p];
                     grandSent += sent[c][p];
-                    grandRemaining += remaining[c][p];
+                    grandRemaining += pending[c][p];
                 });
             });
 
@@ -1492,14 +1609,14 @@
                 if (search && !c.toLowerCase().includes(search)) return;
                 let rowSum = 0;
                 appState.products.forEach(p => {
-                    rowSum += remaining[c][p];
+                    rowSum += pending[c][p];
                 });
                 if (hideZero && rowSum === 0) return;
 
                 tbody += `<tr><td title="${c}">${c}</td>`;
                 appState.products.forEach(p => {
                     const val = remaining[c][p];
-                    colTotals[p] += val;
+                    colTotals[p] += pending[c][p];
                     if (val > 0) {
                         tbody += `<td><span class="badge-pending en-num">${val}</span></td>`;
                     } else if (val < 0) {
@@ -1512,14 +1629,17 @@
                 tbody += `<td>${rowSum > 0 ? `<span class="badge-pending en-num" style="background:#F97316; color:#fff; border-color:#EA580C;">${rowSum}</span>` : `<span class="badge-done en-num">0</span>`}</td></tr>`;
             });
 
-            // صف المجموع في نفس tbody لضمان المحاذاة الأفقية 100%
-            tbody += '<tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
-            appState.products.forEach(p => {
-                tbody += `<td class="en-num">${colTotals[p]}</td>`;
-            });
-            tbody += `<td class="en-num" style="font-size:1rem;">${totalOfFiltered}</td></tr></tbody>`;
+            tbody += '</tbody>';
 
-            table.innerHTML = thead + tbody;
+            // Footer has exactly the same column sequence as the header and body.
+            // Each product total therefore appears directly below its product column.
+            let tfoot = '<tfoot><tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
+            appState.products.forEach(p => {
+                tfoot += `<td class="en-num" data-product-total="${escapeHtmlAttribute(p)}">${colTotals[p]}</td>`;
+            });
+            tfoot += `<td class="en-num" style="font-size:1rem;">${totalOfFiltered}</td></tr></tfoot>`;
+
+            table.innerHTML = thead + tbody + tfoot;
         }
 
         // 2. القائمة المنسدلة للبحث حرف بحرف عن العميل
@@ -1532,8 +1652,16 @@
         }
 
         function filterClientDropdown() {
-            const q = document.getElementById('movClientInput').value.toLowerCase().trim();
+            const inputValue = document.getElementById('movClientInput').value.trim();
+            const q = inputValue.toLowerCase();
             const list = document.getElementById('clientDropdownList');
+            const selected = document.getElementById('movClientSelected').value;
+            if (selected && selected.toLowerCase() !== q) {
+                document.getElementById('movClientSelected').value = '';
+                document.getElementById('movClientSummaryBar').style.display = 'none';
+                document.querySelectorAll('#movItemsGrid input').forEach(input => input.value = '');
+                renderMovementItemsGrid();
+            }
             const { remaining } = calculateBalances();
 
             const filtered = appState.clients.filter(c => c.toLowerCase().includes(q));
@@ -1543,7 +1671,7 @@
                 list.innerHTML = '<div class="search-dropdown-item" style="color:#9CA3AF;">لا يوجد عميل مطابق</div>';
             } else {
                 list.innerHTML = filtered.map(c => {
-                    const remSum = appState.products.reduce((acc, p) => acc + (remaining[c][p] || 0), 0);
+                    const remSum = appState.products.reduce((acc, p) => acc + Math.max(0, remaining[c][p] || 0), 0);
                     return `<div class="search-dropdown-item" onclick="selectClient('${c.replace(/'/g, "\\'")}')">
                         <span>${c}</span>
                         <span class="badge-pending en-num" style="font-size:0.78rem;">متبقي: ${remSum}</span>
@@ -1584,6 +1712,11 @@
         }
 
         function selectClient(clientName) {
+            const previousClient = document.getElementById('movClientSelected').value;
+            if (previousClient && previousClient !== clientName) {
+                document.querySelectorAll('#movItemsGrid input').forEach(input => input.value = '');
+                updateMovTotalQty();
+            }
             document.getElementById('movClientInput').value = clientName;
             document.getElementById('movClientSelected').value = clientName;
             document.getElementById('clientDropdownList').classList.remove('open');
@@ -1607,7 +1740,7 @@
             if (client && appState.clients.includes(client)) {
                 bar.style.display = 'flex';
                 const { remaining } = calculateBalances();
-                const remTotal = appState.products.reduce((sum, p) => sum + (remaining[client][p] || 0), 0);
+                const remTotal = appState.products.reduce((sum, p) => sum + Math.max(0, remaining[client][p] || 0), 0);
                 document.getElementById('selectedClientTitle').innerHTML = `العميل المحدد: ${client} — إجمالي المتبقي له حالياً: <span class="en-num">${remTotal}</span> قطعة`;
                 fillBtn.style.display = (type === 'SENT' && remTotal > 0) ? 'inline-flex' : 'none';
             } else {
@@ -1618,6 +1751,7 @@
 
         function renderMovementItemsGrid() {
             const client = document.getElementById('movClientSelected').value;
+            const type = document.getElementById('movType').value;
             const { remaining } = calculateBalances();
             const grid = document.getElementById('movItemsGrid');
 
@@ -1629,11 +1763,12 @@
             grid.innerHTML = appState.products.map((prod, idx) => {
                 const rem = (client && remaining[client]) ? remaining[client][prod] : 0;
                 const val = currentVals[prod] || '';
+                const sendMax = type === 'SENT' && client ? `max="${Math.max(0, rem)}"` : '';
                 return `
                     <div class="item-input-box">
                         <span class="item-name">${prod}</span>
-                        <span class="item-bal-hint">المتبقي للعميل: <strong class="en-num" style="color:${rem > 0 ? '#EA580C' : '#6B7280'}">${rem}</strong></span>
-                        <input type="number" min="0" step="1" data-prod="${prod}" data-idx="${idx}" value="${val}"
+                        <span class="item-bal-hint">المتبقي للعميل: <strong class="en-num" style="color:${rem > 0 ? '#EA580C' : (rem < 0 ? '#DC2626' : '#6B7280')}">${rem}</strong></span>
+                        <input type="number" min="0" step="1" ${sendMax} data-prod="${prod}" data-idx="${idx}" value="${val}"
                                oninput="updateMovTotalQty()" onkeydown="handleItemGridKeydown(event, ${idx})">
                     </div>
                 `;
@@ -1691,14 +1826,19 @@
             const type = document.getElementById('movType').value;
             const date = document.getElementById('movDate').value;
             const clientInput = document.getElementById('movClientInput').value.trim();
+            const selectedClient = document.getElementById('movClientSelected').value;
             const matchedClient = appState.clients.find(c => c.toLowerCase() === clientInput.toLowerCase());
 
             if (!date) {
                 showToast('⚠️ يرجى تحديد التاريخ');
                 return;
             }
-            if (!matchedClient) {
-                showToast('⚠️ يرجى اختيار عميل صحيح من القائمة');
+            if (appState.openingDate && date < appState.openingDate) {
+                showToast(`⚠️ تاريخ الحركة يجب أن يكون في ${appState.openingDate} أو بعده؛ الرصيد الافتتاحي يشمل ما قبله`);
+                return;
+            }
+            if (!matchedClient || selectedClient !== matchedClient) {
+                showToast('⚠️ يرجى اختيار العميل من القائمة المنسدلة أولاً');
                 document.getElementById('movClientInput').focus();
                 return;
             }
@@ -1706,7 +1846,7 @@
             const items = {};
             let totalQty = 0;
             document.querySelectorAll('#movItemsGrid input').forEach(inp => {
-                const q = Math.max(0, parseInt(inp.value) || 0);
+                const q = Math.max(0, Math.floor(toSafeNumber(inp.value, 0)));
                 if (q > 0) {
                     items[inp.dataset.prod] = q;
                     totalQty += q;
@@ -1718,17 +1858,32 @@
                 return;
             }
 
-            appState.movements.unshift({
-                id: 'MOV-' + Date.now(),
+            if (type === 'SENT') {
+                const { remaining } = calculateBalances();
+                const exceeded = Object.entries(items).find(([product, qty]) => qty > Math.max(0, remaining[matchedClient] && remaining[matchedClient][product] || 0));
+                if (exceeded) {
+                    const [product, qty] = exceeded;
+                    const available = Math.max(0, remaining[matchedClient] && remaining[matchedClient][product] || 0);
+                    showToast(`⚠️ كمية ${product} المدخلة (${qty}) أكبر من المتبقي (${available})`);
+                    const target = Array.from(document.querySelectorAll('#movItemsGrid input')).find(inp => inp.dataset.prod === product);
+                    if (target) { target.focus(); target.select(); }
+                    return;
+                }
+            }
+
+            const newMovement = {
+                id: 'MOV-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
                 date,
                 type,
                 client: matchedClient,
                 items,
                 totalQty,
-                note: document.getElementById('movNote').value.trim()
-            });
+                note: document.getElementById('movNote').value.trim(),
+                createdAt: new Date().toISOString()
+            };
+            appState.movements.unshift(newMovement);
 
-            saveState();
+            saveState({ movementUpsert: newMovement });
             clearMovementInputs();
             updateMovementUI();
             renderDashboardMatrix();
@@ -1761,10 +1916,9 @@
                     }
                 });
 
+                if (search && !c.toLowerCase().includes(search)) return;
                 grandQty += cQty;
                 grandValue += cVal;
-
-                if (search && !c.toLowerCase().includes(search)) return;
                 rowNum++;
 
                 rowsHtml += `<tr>
@@ -1847,7 +2001,7 @@
         function deleteMovement(id) {
             if (!confirm('هل أنت متأكد من حذف هذه الحركة؟ سيتم تعديل الأرصدة المتبقية تلقائياً.')) return;
             appState.movements = appState.movements.filter(m => m.id !== id);
-            saveState();
+            saveState({ movementDeleteId: id });
             renderHistoryTable();
             renderDashboardMatrix();
             showToast('🗑️ تم حذف الحركة وتحديث الأرصدة');
@@ -1915,7 +2069,7 @@
                 if (m.client === oldName) m.client = trimmed;
             });
 
-            saveState();
+            saveState({ replaceAllMovements: true });
             renderSettingsLists();
             renderOpeningBalancesTable();
             renderDashboardMatrix();
@@ -1990,7 +2144,7 @@
                 }
             });
 
-            saveState();
+            saveState({ replaceAllMovements: true });
             renderSettingsLists();
             renderOpeningBalancesTable();
             renderDashboardMatrix();
@@ -2034,7 +2188,7 @@
                 let rowSum = 0;
                 tbody += `<tr><td title="${c}">${c}</td>`;
                 appState.products.forEach(p => {
-                    const val = (appState.openingBalances[c] && appState.openingBalances[c][p]) ? Number(appState.openingBalances[c][p]) : 0;
+                    const val = toSafeNumber(appState.openingBalances[c] && appState.openingBalances[c][p], 0);
                     rowSum += val;
                     colTotals[p] += val;
                     tbody += `<td>
@@ -2045,13 +2199,15 @@
                 tbody += `<td class="en-num row-open-total" style="font-weight:800; color:#EA580C;">${rowSum}</td></tr>`;
             });
 
-            tbody += '<tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
-            appState.products.forEach(p => {
-                tbody += `<td class="en-num col-open-total" data-prod="${p}">${colTotals[p]}</td>`;
-            });
-            tbody += `<td class="en-num" id="grandOpenFooterTotal">${grandOpenTotal}</td></tr></tbody>`;
+            tbody += '</tbody>';
 
-            table.innerHTML = thead + tbody;
+            let tfoot = '<tfoot><tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
+            appState.products.forEach(p => {
+                tfoot += `<td class="en-num col-open-total" data-prod="${escapeHtmlAttribute(p)}">${colTotals[p]}</td>`;
+            });
+            tfoot += `<td class="en-num" id="grandOpenFooterTotal">${grandOpenTotal}</td></tr></tfoot>`;
+
+            table.innerHTML = thead + tbody + tfoot;
         }
 
         function recalcOpeningTableTotals() {
@@ -2063,7 +2219,7 @@
             table.querySelectorAll('tbody tr:not(.matrix-total-row)').forEach(tr => {
                 let rowSum = 0;
                 tr.querySelectorAll('input.edit-bal-input').forEach(inp => {
-                    const v = Math.max(0, parseInt(inp.value) || 0);
+                    const v = Math.max(0, Math.floor(toSafeNumber(inp.value, 0)));
                     rowSum += v;
                     colTotals[inp.dataset.prod] += v;
                 });
@@ -2082,7 +2238,7 @@
             document.querySelectorAll('#openingBalancesTable input.edit-bal-input').forEach(inp => {
                 const c = inp.dataset.client;
                 const p = inp.dataset.prod;
-                const val = Math.max(0, parseInt(inp.value) || 0);
+                const val = Math.max(0, Math.floor(toSafeNumber(inp.value, 0)));
                 if (!appState.openingBalances[c]) appState.openingBalances[c] = {};
                 appState.openingBalances[c][p] = val;
             });
@@ -2109,7 +2265,7 @@
             const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            const today = new Date().toISOString().slice(0, 10);
+            const today = getLocalDateString();
             a.href = url;
             a.download = `Fondant_Choco_Returns_Backup_${today}.json`;
             a.click();
@@ -2127,16 +2283,8 @@
                     if (!parsed.clients || !parsed.products || !parsed.openingBalances) {
                         throw new Error('ملف غير صالح');
                     }
-                    appState = {
-                        openingDate: parsed.openingDate || '2026-11-22',
-                        clients: parsed.clients,
-                        products: parsed.products,
-                        unitPrices: buildPricesMap(parsed.products, parsed.unitPrices),
-                        openingBalances: parsed.openingBalances,
-                        movements: parsed.movements || [],
-                        lastBackup: parsed.lastBackup || new Date().toISOString()
-                    };
-                    saveState();
+                    appState = normalizeAppState({ ...parsed, lastBackup: parsed.lastBackup || new Date().toISOString() });
+                    saveState({ replaceAllMovements: true });
                     renderDashboardMatrix();
                     renderOpeningBalancesTable();
                     renderHistoryTable();
@@ -2161,7 +2309,7 @@
                 let total = 0;
                 appState.products.forEach(p => {
                     row[p] = remaining[c][p];
-                    total += remaining[c][p];
+                    total += Math.max(0, remaining[c][p]);
                 });
                 row['Total Remaining'] = total;
                 return row;
@@ -2198,9 +2346,195 @@
             const wsMov = XLSX.utils.json_to_sheet(movRows.length ? movRows : [{ 'Info': 'No movements recorded yet' }]);
             XLSX.utils.book_append_sheet(wb, wsMov, 'Daily_Movements');
 
-            const today = new Date().toISOString().slice(0, 10);
+            const today = getLocalDateString();
             XLSX.writeFile(wb, `Fondant_Choco_Returns_${today}.xlsx`);
             showToast('📊 تم تصدير ملف Excel بنجاح');
+        }
+
+        // تصدير تقرير قيمة المرتجعات للفترة 19-21 November 2026 إلى PDF.
+        // The report follows the current table filter and paginates without cutting rows.
+        async function exportReturnsValueToPDF() {
+            const sourceTable = document.getElementById('returnsValueSummaryTable');
+            const sourceBody = document.getElementById('returnsValueSummaryBody');
+            if (!sourceTable || !sourceBody) {
+                showToast('تعذر العثور على جدول ملخص المرتجعات');
+                return;
+            }
+
+            if (!window.jspdf || typeof html2canvas !== 'function') {
+                showToast('مكتبات PDF غير متاحة. تحقق من اتصال الإنترنت ثم أعد المحاولة.');
+                return;
+            }
+
+            showToast('⏳ جاري تجهيز PDF لملخص قيمة المرتجعات...');
+            const allRows = Array.from(sourceBody.querySelectorAll('tr'));
+            const totalRow = allRows.find(row => row.classList.contains('std-total-row')) || null;
+            const dataRows = allRows.filter(row => row !== totalRow);
+            const rowsPerPage = 5;
+            const pageCount = Math.max(1, Math.ceil(dataRows.length / rowsPerPage));
+            const reportDate = getLocalDateString();
+            const pageWidth = 1123;
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-12000px';
+            container.style.top = '0';
+            container.style.width = `${pageWidth}px`;
+            container.style.background = '#ffffff';
+            container.style.zIndex = '-1';
+            container.style.direction = 'rtl';
+            document.body.appendChild(container);
+
+            const escapeText = value => String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+
+            function makeReportPage(pageNo) {
+                const page = document.createElement('div');
+                page.style.width = `${pageWidth}px`;
+                page.style.padding = '34px 42px 28px';
+                page.style.boxSizing = 'border-box';
+                page.style.background = '#ffffff';
+                page.style.color = '#1F2937';
+                page.style.direction = 'rtl';
+                page.style.fontFamily = "'Cairo', Arial, sans-serif";
+                page.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:20px; border-bottom:4px solid #F97316; padding-bottom:15px; margin-bottom:18px;">
+                        <div style="text-align:right;">
+                            <div style="font-size:25px; font-weight:800; color:#EA580C;">Fondant Choco</div>
+                            <div style="font-size:20px; font-weight:800; color:#1F2937;">ملخص قيمة مرتجعات المستشفيات</div>
+                            <div style="font-size:14px; color:#6B7280; margin-top:5px;">الفترة: 19 إلى 21 نوفمبر 2026</div>
+                        </div>
+                        <div style="text-align:left; direction:ltr; font-family:Inter,Arial,sans-serif; font-size:12px; color:#6B7280;">
+                            <div>Report Date: ${escapeText(reportDate)}</div>
+                            <div style="margin-top:5px;">Page ${pageNo} / ${pageCount}</div>
+                        </div>
+                    </div>
+                    <div class="returns-pdf-table-wrap"></div>
+                    <div style="margin-top:14px; padding-top:8px; border-top:1px solid #FED7AA; font-size:11px; color:#9CA3AF; text-align:center;">Fondant Choco - Returns Value Summary</div>
+                `;
+
+                const wrap = page.querySelector('.returns-pdf-table-wrap');
+                const table = document.createElement('table');
+                table.className = 'std-table';
+                table.style.width = '100%';
+                table.style.tableLayout = 'fixed';
+                table.style.borderCollapse = 'collapse';
+                table.style.direction = 'rtl';
+                table.style.fontFamily = "'Cairo', Arial, sans-serif";
+                table.style.fontSize = '13px';
+
+                const thead = sourceTable.querySelector('thead').cloneNode(true);
+                const headerRow = thead.querySelector('tr');
+                const widths = ['5%', '23%', '14%', '14%', '44%'];
+                Array.from(headerRow.children).forEach((th, index) => {
+                    th.style.width = widths[index] || 'auto';
+                    th.style.padding = '10px 7px';
+                    th.style.background = '#F97316';
+                    th.style.color = '#FFFFFF';
+                    th.style.border = '1px solid #E5E7EB';
+                    th.style.textAlign = index === 1 ? 'right' : 'center';
+                    th.style.fontWeight = '800';
+                    th.style.fontSize = '13px';
+                });
+
+                const tbody = document.createElement('tbody');
+                table.appendChild(thead);
+                table.appendChild(tbody);
+                wrap.appendChild(table);
+                return { page, tbody };
+            }
+
+            try {
+                if (document.fonts && document.fonts.ready) await document.fonts.ready;
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+                const pageParts = [];
+
+                for (let pageIndex = 0; pageIndex < pageCount; pageIndex++) {
+                    const { page, tbody } = makeReportPage(pageIndex + 1);
+                    const start = pageIndex * rowsPerPage;
+                    const batchRows = dataRows.slice(start, start + rowsPerPage);
+
+                    if (batchRows.length) {
+                        batchRows.forEach((sourceRow, rowIndex) => {
+                            const clone = sourceRow.cloneNode(true);
+                            clone.style.breakInside = 'avoid';
+                            Array.from(clone.children).forEach((cell, cellIndex) => {
+                                cell.style.padding = '10px 7px';
+                                cell.style.border = '1px solid #FED7AA';
+                                cell.style.verticalAlign = 'middle';
+                                cell.style.whiteSpace = 'normal';
+                                cell.style.overflowWrap = 'anywhere';
+                                cell.style.fontSize = '12px';
+                                if (cellIndex === 1) cell.style.textAlign = 'right';
+                                if (cellIndex === 4) {
+                                    cell.style.direction = 'ltr';
+                                    cell.style.textAlign = 'left';
+                                    cell.style.fontFamily = "'Inter', 'Cairo', sans-serif";
+                                    cell.style.fontSize = '11px';
+                                }
+                                if (rowIndex % 2 === 1) cell.style.background = '#FFFBF7';
+                            });
+                            tbody.appendChild(clone);
+                        });
+                    } else {
+                        const empty = document.createElement('tr');
+                        empty.innerHTML = '<td colspan="5" style="padding:18px; text-align:center; border:1px solid #FED7AA; color:#6B7280;">لا توجد نتائج مطابقة لعملية البحث</td>';
+                        tbody.appendChild(empty);
+                    }
+
+                    if (pageIndex === pageCount - 1 && totalRow) {
+                        const totalClone = totalRow.cloneNode(true);
+                        Array.from(totalClone.children).forEach(cell => {
+                            cell.style.padding = '11px 7px';
+                            cell.style.border = '1px solid #F97316';
+                            cell.style.background = '#FFEDD5';
+                            cell.style.color = '#9A3412';
+                            cell.style.fontWeight = '800';
+                            cell.style.whiteSpace = 'normal';
+                        });
+                        if (totalClone.children[3]) {
+                            totalClone.children[3].style.background = '#F97316';
+                            totalClone.children[3].style.color = '#FFFFFF';
+                        }
+                        tbody.appendChild(totalClone);
+                    }
+
+                    container.appendChild(page);
+                    pageParts.push(page);
+                }
+
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const margin = 24;
+                const availableWidth = pdfWidth - margin * 2;
+                const availableHeight = pdfHeight - margin * 2;
+
+                for (let i = 0; i < pageParts.length; i++) {
+                    const canvas = await html2canvas(pageParts[i], {
+                        scale: 2,
+                        backgroundColor: '#FFFFFF',
+                        useCORS: true,
+                        logging: false
+                    });
+                    const imgData = canvas.toDataURL('image/png');
+                    const scale = Math.min(availableWidth / canvas.width, availableHeight / canvas.height);
+                    const renderWidth = canvas.width * scale;
+                    const renderHeight = canvas.height * scale;
+                    const x = (pdfWidth - renderWidth) / 2;
+                    const y = (pdfHeight - renderHeight) / 2;
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', x, y, renderWidth, renderHeight, undefined, 'FAST');
+                }
+
+                pdf.save(`Fondant_Choco_Returns_Value_19-21-11-2026_${reportDate}.pdf`);
+                showToast('✅ تم تصدير ملخص قيمة المرتجعات إلى PDF');
+            } catch (error) {
+                console.error('Returns Value PDF Export Error:', error);
+                showToast('❌ حدث خطأ أثناء إنشاء PDF لملخص المرتجعات');
+            } finally {
+                if (container.parentNode) container.parentNode.removeChild(container);
+            }
         }
 
         // تقرير الأرصدة المتبقية (PDF) باللغة الإنجليزية وعكس اتجاه الأعمدة: اسم المستشفى يسار والإجمالي يمين الجدول
@@ -2231,7 +2565,7 @@
                 return p;
             }
 
-            const today = new Date().toISOString().slice(0, 10);
+            const today = getLocalDateString();
             currentPage = createPage();
             currentPage.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #F97316; padding-bottom:12px; margin-bottom:16px;">
@@ -2267,7 +2601,7 @@
                 appState.products.forEach(p => {
                     const val = remaining[c][p] || 0;
                     if (val !== 0) {
-                        clientSum += val;
+                        clientSum += Math.max(0, val);
                         activeItems.push(`${p}: ${val}`);
                     }
                 });
@@ -2327,12 +2661,243 @@
         // التهيئة عند فتح الصفحة
         window.addEventListener('DOMContentLoaded', () => {
             loadState();
-            const todayStr = new Date().toISOString().slice(0, 10);
+            const todayStr = getLocalDateString();
             document.getElementById('movDate').value = todayStr;
             renderDashboardMatrix();
             renderMovementItemsGrid();
             renderReturnsValueTable();
         });
+
+
+        // Bridge between the classic UI script and the Firebase ES module.
+        window.__fondantReturnsBridge = {
+            getState: () => appState,
+            applyRemoteConfig: remote => {
+                appState = normalizeAppState({ ...appState, ...remote, movements: appState.movements });
+                persistLocalState();
+                refreshAllViews();
+            },
+            applyRemoteMovements: remoteMovements => {
+                appState = normalizeAppState({ ...appState, movements: remoteMovements });
+                persistLocalState();
+                refreshAllViews();
+            }
+        };
+
     </script>
+
+    <!-- Firebase modular SDK: real-time cloud synchronization for settings, clients, products, balances, prices and movements -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-app.js";
+        import {
+            getFirestore, doc, collection, getDoc, getDocs, setDoc, deleteDoc,
+            writeBatch, onSnapshot
+        } from "https://www.gstatic.com/firebasejs/13.4.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCV-g86imaOX5XEdgE9gUTR_Hk5RiVVKrI",
+            authDomain: "hosp-rtrn.firebaseapp.com",
+            projectId: "hosp-rtrn",
+            storageBucket: "hosp-rtrn.firebasestorage.app",
+            messagingSenderId: "929992469686",
+            appId: "1:929992469686:web:d4f7092ccd7f0fe5790a17"
+        };
+
+        const firebaseApp = initializeApp(firebaseConfig);
+        const db = getFirestore(firebaseApp);
+        const stateRef = doc(db, "fondant_choco_returns", "main");
+        const movementsRef = collection(db, "fondant_choco_returns", "main", "movements");
+        let ready = false;
+        let initializationPromise = null;
+        let stateUnsubscribe = null;
+        let movementsUnsubscribe = null;
+        let configWriteQueue = Promise.resolve();
+        let movementWriteQueue = Promise.resolve();
+        let lastKnownConfig = null;
+
+        function setFirebaseStatus(message, state = "pending") {
+            const textEl = document.getElementById("firebaseStatusText");
+            const dotEl = document.getElementById("firebaseStatusDot");
+            if (textEl) textEl.textContent = message;
+            if (dotEl) {
+                dotEl.style.background = state === "connected" ? "#86EFAC" : state === "error" ? "#FCA5A5" : "#FDE68A";
+            }
+        }
+
+        function getBridge() {
+            return window.__fondantReturnsBridge;
+        }
+
+        function configPayload() {
+            const state = getBridge().getState();
+            return {
+                schemaVersion: 2,
+                openingDate: state.openingDate,
+                clients: state.clients,
+                products: state.products,
+                unitPrices: state.unitPrices,
+                openingBalances: state.openingBalances,
+                lastBackup: state.lastBackup || null,
+                updatedAt: Date.now()
+            };
+        }
+
+        function safeMovementDocId(id) {
+            return encodeURIComponent(String(id)).replaceAll("/", "_");
+        }
+
+        function queueMovementWrite(operation) {
+            movementWriteQueue = movementWriteQueue.catch(() => {}).then(operation).catch(error => {
+                setFirebaseStatus("خطأ مزامنة الحركات", "error");
+                console.error("Firebase movements write error:", error);
+                throw error;
+            });
+            return movementWriteQueue;
+        }
+
+        async function commitMovementOperations(operations) {
+            const chunkSize = 400;
+            for (let i = 0; i < operations.length; i += chunkSize) {
+                const batch = writeBatch(db);
+                operations.slice(i, i + chunkSize).forEach(op => {
+                    if (op.type === "delete") batch.delete(op.ref);
+                    else batch.set(op.ref, op.data);
+                });
+                await batch.commit();
+            }
+        }
+
+        async function seedOrMergeRemoteData() {
+            const [remoteStateSnap, remoteMovementsSnap] = await Promise.all([
+                getDoc(stateRef),
+                getDocs(movementsRef)
+            ]);
+            const localState = getBridge().getState();
+            const localMovements = Array.isArray(localState.movements) ? localState.movements : [];
+
+            if (!remoteStateSnap.exists()) {
+                await setDoc(stateRef, configPayload());
+                const ops = localMovements.map(m => ({
+                    type: "set",
+                    ref: doc(movementsRef, safeMovementDocId(m.id)),
+                    data: m
+                }));
+                await commitMovementOperations(ops);
+                getBridge().applyRemoteMovements(localMovements);
+                return;
+            }
+
+            getBridge().applyRemoteConfig(remoteStateSnap.data());
+            const remoteMovements = remoteMovementsSnap.docs.map(d => d.data());
+            const remoteIds = new Set(remoteMovements.map(m => String(m.id)));
+            const localOnly = localMovements.filter(m => !remoteIds.has(String(m.id)));
+            const merged = [...remoteMovements, ...localOnly];
+            getBridge().applyRemoteMovements(merged);
+            if (localOnly.length) {
+                await commitMovementOperations(localOnly.map(m => ({
+                    type: "set",
+                    ref: doc(movementsRef, safeMovementDocId(m.id)),
+                    data: m
+                })));
+            }
+        }
+
+        async function initializeRealtimeSync() {
+            if (ready) return;
+            if (initializationPromise) return initializationPromise;
+            initializationPromise = (async () => {
+                setFirebaseStatus("جاري تحميل البيانات السحابية...", "pending");
+                await seedOrMergeRemoteData();
+                ready = true;
+
+                stateUnsubscribe = onSnapshot(stateRef, snapshot => {
+                    if (snapshot.exists()) getBridge().applyRemoteConfig(snapshot.data());
+                    setFirebaseStatus("متصل - تتم المزامنة تلقائياً", "connected");
+                }, error => {
+                    setFirebaseStatus("تعذر قراءة بيانات السحابة", "error");
+                    console.error("Firebase state listener error:", error);
+                });
+
+                movementsUnsubscribe = onSnapshot(movementsRef, snapshot => {
+                    const movements = snapshot.docs.map(d => d.data());
+                    getBridge().applyRemoteMovements(movements);
+                    setFirebaseStatus("متصل - تتم المزامنة تلقائياً", "connected");
+                }, error => {
+                    setFirebaseStatus("تعذر قراءة الحركات", "error");
+                    console.error("Firebase movements listener error:", error);
+                });
+            })();
+            try {
+                await initializationPromise;
+            } finally {
+                initializationPromise = null;
+            }
+        }
+
+        window.fondantFirebaseSync = {
+            isReady: () => ready,
+            saveConfig: () => {
+                // Only write fields changed on this device; separate top-level changes
+                // from other devices are therefore merged instead of replacing the document.
+                const requestedConfig = configPayload();
+                configWriteQueue = configWriteQueue.catch(() => {}).then(async () => {
+                    const fields = ["openingDate", "clients", "products", "unitPrices", "openingBalances", "lastBackup"];
+                    const patch = {};
+                    fields.forEach(field => {
+                        const before = lastKnownConfig ? JSON.stringify(lastKnownConfig[field]) : undefined;
+                        const after = JSON.stringify(requestedConfig[field]);
+                        if (before !== after) patch[field] = requestedConfig[field];
+                    });
+                    if (Object.keys(patch).length === 0) return;
+                    patch.updatedAt = Date.now();
+                    await setDoc(stateRef, patch, { merge: true });
+                    lastKnownConfig = { ...(lastKnownConfig || {}), ...patch };
+                });
+                return configWriteQueue.catch(error => {
+                    setFirebaseStatus("فشل حفظ الإعدادات سحابياً", "error");
+                    console.error("Firebase config write error:", error);
+                    throw error;
+                });
+            },
+            upsertMovement: movement => queueMovementWrite(() => setDoc(
+                doc(movementsRef, safeMovementDocId(movement.id)), movement
+            )),
+            deleteMovement: id => queueMovementWrite(() => deleteDoc(
+                doc(movementsRef, safeMovementDocId(id))
+            )),
+            replaceAllMovements: () => queueMovementWrite(async () => {
+                const currentSnapshot = await getDocs(movementsRef);
+                const movements = getBridge().getState().movements || [];
+                const desiredIds = new Set(movements.map(m => safeMovementDocId(m.id)));
+                const operations = [];
+                currentSnapshot.docs.forEach(d => {
+                    if (!desiredIds.has(d.id)) operations.push({ type: "delete", ref: d.ref });
+                });
+                movements.forEach(m => operations.push({
+                    type: "set",
+                    ref: doc(movementsRef, safeMovementDocId(m.id)),
+                    data: m
+                }));
+                await commitMovementOperations(operations);
+            })
+        };
+
+        function reportFirebaseStartupError(error) {
+            ready = false;
+            setFirebaseStatus("غير متصل - الحفظ محلي", "error");
+            console.error("Firebase initialization failed:", error);
+            if (typeof showToast === "function") {
+                showToast("⚠️ لم يتم الاتصال بـ Firebase؛ البيانات محفوظة محلياً فقط");
+            }
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            initializeRealtimeSync().catch(reportFirebaseStartupError);
+        }, { once: true });
+        window.addEventListener("online", () => {
+            if (!ready) initializeRealtimeSync().catch(reportFirebaseStartupError);
+        });
+    </script>
+
 </body>
 </html>
