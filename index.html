@@ -2,181 +2,2337 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الموقع تحت الصيانة | Website Under Maintenance</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Tajawal for Arabic & Inter for English -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fondant Choco - متابعة المرتجعات والتعويضات</title>
+
+    <!-- الأيقونات والاختصارات -->
+    <link rel="icon" href="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg" type="image/jpeg">
+    <link rel="apple-touch-icon" href="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg">
+    <link rel="apple-touch-icon" sizes="152x152" href="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg">
+    <link rel="apple-touch-icon" sizes="167x167" href="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg">
+
+    <!-- إعدادات إختصار آيفون والـ iOS Home Screen -->
+    <meta name="apple-mobile-web-app-title" content="متابعة المرتجعات">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="application-name" content="Fondant Returns">
+    <meta name="theme-color" content="#F97316">
+
+    <!-- مكتبات PDF و Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- خط عربي وإنجليزي واضح -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@500;600;700&display=swap" rel="stylesheet">
+
     <style>
+        :root {
+            --primary-dark: #EA580C;
+            --primary: #F97316;
+            --primary-medium: #FB923C;
+            --primary-light: #FDBA74;
+            --primary-soft: #FFEDD5;
+            --primary-bg: #FFF7ED;
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+            --border-color: #FED7AA;
+            --card-bg: #FFFFFF;
+            --success: #16A34A;
+            --success-bg: #DCFCE7;
+            --danger: #DC2626;
+            --danger-bg: #FEE2E2;
+            --shadow-sm: 0 2px 6px rgba(249, 115, 22, 0.08);
+            --shadow-md: 0 6px 16px rgba(249, 115, 22, 0.14);
+            --shadow-lg: 0 12px 26px rgba(249, 115, 22, 0.20);
+        }
+
         * {
-            font-family: 'Tajawal', 'Inter', sans-serif;
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
 
-        /* Animated Vibrant Mesh Background */
         body {
-            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #311042, #020617);
-            background-size: 400% 400%;
-            animation: gradientBG 12s ease infinite;
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-dark);
             min-height: 100vh;
-            overflow-x: hidden;
+            padding-bottom: 85px;
+            line-height: 1.5;
         }
 
-        @keyframes gradientBG {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
+        .en-num {
+            font-family: 'Inter', 'Cairo', sans-serif;
+            direction: ltr;
+            display: inline-block;
         }
 
-        /* Glowing Animated Text Effect */
-        .glow-text {
-            background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc, #f472b6);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            animation: glowGradient 5s ease infinite alternate;
+        /* إزالة أسهم الأرقام من كل حقول الإدخال */
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+            appearance: textfield;
         }
 
-        @keyframes glowGradient {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 100% 50%; }
+        /* Header - برتقالي عادي مشرق */
+        .app-header {
+            background: linear-gradient(135deg, #F97316 0%, #FB923C 100%);
+            color: #FFFFFF;
+            padding: 15px 24px;
+            box-shadow: var(--shadow-md);
+            position: sticky;
+            top: 0;
+            z-index: 900;
         }
 
-        /* Floating Gear Animation */
-        .float-gear {
-            animation: float 6s ease-in-out infinite;
+        .header-inner {
+            max-width: 1480px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
-        .spin-slow {
-            animation: spin 15s linear infinite;
+        .brand-box {
+            display: flex;
+            align-items: center;
+            gap: 14px;
         }
 
-        .spin-reverse {
-            animation: spinReverse 20s linear infinite;
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid #FFFFFF;
+            background: #fff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
         }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-15px) rotate(5deg); }
+        .brand-title h1 {
+            font-size: 1.35rem;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            line-height: 1.2;
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .brand-title span {
+            font-size: 0.85rem;
+            color: #FFF7ED;
+            font-weight: 600;
         }
 
-        @keyframes spinReverse {
-            from { transform: rotate(360deg); }
-            to { transform: rotate(0deg); }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
-        /* Subtle Pulse Effect for Card */
-        .glass-card {
-            background: rgba(15, 23, 42, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
-                        0 0 40px rgba(129, 140, 248, 0.15);
+        /* Navigation Tabs */
+        .nav-container {
+            max-width: 1480px;
+            margin: 16px auto 0;
+            padding: 0 16px;
         }
 
-        /* Progress Bar Animation */
-        .progress-line {
-            width: 0%;
-            animation: fillProgress 3s ease-in-out infinite alternate;
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            background: #FFFFFF;
+            padding: 7px;
+            border-radius: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+            scrollbar-width: none;
         }
 
-        @keyframes fillProgress {
-            0% { width: 15%; }
-            100% { width: 85%; }
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab-btn {
+            flex: 1;
+            min-width: 155px;
+            padding: 11px 14px;
+            border: none;
+            background: transparent;
+            color: #C2410C;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.92rem;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .tab-btn:hover {
+            background: var(--primary-soft);
+        }
+
+        .tab-btn.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Main Container */
+        .main-container {
+            max-width: 1480px;
+            margin: 18px auto;
+            padding: 0 16px;
+        }
+
+        .section-panel {
+            display: none;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .section-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Floating KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .kpi-card {
+            background: linear-gradient(145deg, #FFFFFF 0%, #FFF7ED 100%);
+            border: 1.5px solid var(--border-color);
+            border-right: 5px solid var(--primary);
+            border-radius: 15px;
+            padding: 18px;
+            box-shadow: var(--shadow-md);
+            animation: kpiFloat 4.5s ease-in-out infinite;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .kpi-card:nth-child(2) {
+            animation-delay: 0.6s;
+            border-right-color: var(--primary-medium);
+        }
+
+        .kpi-card:nth-child(3) {
+            animation-delay: 1.2s;
+            border-right-color: var(--success);
+        }
+
+        .kpi-card:nth-child(4) {
+            animation-delay: 1.8s;
+            border-right-color: #EA580C;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-6px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            animation-play-state: paused;
+        }
+
+        @keyframes kpiFloat {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+        }
+
+        .kpi-label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 9px;
+            background: var(--primary-soft);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .kpi-value {
+            font-size: 1.95rem;
+            font-weight: 800;
+            color: #EA580C;
+            font-family: 'Inter', sans-serif;
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 0.78rem;
+            color: var(--primary);
+            font-weight: 600;
+            margin-top: 5px;
+        }
+
+        /* Cards & Panels */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid var(--primary-soft);
+        }
+
+        .card-title {
+            font-size: 1.12rem;
+            font-weight: 800;
+            color: #EA580C;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 9px 15px;
+            border-radius: 10px;
+            border: none;
+            font-family: 'Cairo', sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #FFFFFF;
+            box-shadow: 0 3px 10px rgba(249, 115, 22, 0.25);
+        }
+
+        .btn-primary:hover {
+            background: #EA580C;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #16A34A;
+            color: #FFFFFF;
+        }
+
+        .btn-success:hover {
+            background: #15803D;
+        }
+
+        .btn-outline {
+            background: #FFFFFF;
+            color: #EA580C;
+            border: 1.5px solid var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary-soft);
+        }
+
+        .btn-header {
+            background: rgba(255, 255, 255, 0.22);
+            color: #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.45);
+        }
+
+        .btn-header:hover {
+            background: rgba(255, 255, 255, 0.34);
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: #FFFFFF;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+
+        .btn-edit {
+            background: #F59E0B;
+            color: #FFFFFF;
+        }
+
+        .btn-edit:hover {
+            background: #D97706;
+        }
+
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 0.78rem;
+            border-radius: 7px;
+        }
+
+        /* Forms & Searchable Dropdown */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            position: relative;
+        }
+
+        .form-group label {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #EA580C;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 13px;
+            border: 1.5px solid var(--border-color);
+            border-radius: 10px;
+            font-family: 'Cairo', 'Inter', sans-serif;
+            font-size: 0.94rem;
+            color: var(--text-dark);
+            background: #FFFFFF;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+        }
+
+        .form-control[type="number"], .form-control[type="date"] {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+
+        /* Custom Letter-by-Letter Searchable Dropdown */
+        .search-select-wrap {
+            position: relative;
+        }
+
+        .search-dropdown-list {
+            position: absolute;
+            top: calc(100% + 4px);
+            right: 0;
+            left: 0;
+            background: #FFFFFF;
+            border: 1.5px solid var(--primary);
+            border-radius: 10px;
+            max-height: 230px;
+            overflow-y: auto;
+            z-index: 950;
+            box-shadow: var(--shadow-lg);
+            display: none;
+        }
+
+        .search-dropdown-list.open {
+            display: block;
+        }
+
+        .search-dropdown-item {
+            padding: 9px 13px;
+            cursor: pointer;
+            font-size: 0.92rem;
+            font-weight: 600;
+            border-bottom: 1px solid #FFF7ED;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-dropdown-item:hover, .search-dropdown-item.highlighted {
+            background: var(--primary-soft);
+            color: #EA580C;
+        }
+
+        /* تنسيق الجداول الموحد والمنضبط أفقياً بالكامل */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            border-radius: 12px;
+            border: 1.5px solid var(--border-color);
+            background: #FFFFFF;
+        }
+
+        .matrix-table {
+            width: max-content;
+            min-width: 100%;
+            border-collapse: collapse;
+            font-size: 0.84rem;
+        }
+
+        .matrix-table th,
+        .matrix-table td {
+            border: 1px solid #FED7AA;
+            padding: 8px 6px;
+            text-align: center;
+            vertical-align: middle;
+            width: 96px;
+            min-width: 96px;
+            font-family: 'Inter', 'Cairo', sans-serif;
+        }
+
+        .matrix-table th:first-child,
+        .matrix-table td:first-child {
+            text-align: right;
+            padding: 8px 12px;
+            width: 235px;
+            min-width: 235px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .matrix-table th:last-child,
+        .matrix-table td:last-child {
+            width: 100px;
+            min-width: 100px;
+            font-weight: 800;
+        }
+
+        .matrix-table thead th {
+            background: #F97316;
+            color: #FFFFFF;
+            font-weight: 700;
+            height: 52px;
+            line-height: 1.25;
+            white-space: normal;
+            border-color: rgba(255,255,255,0.25);
+        }
+
+        .matrix-table thead th:first-child,
+        .matrix-table thead th:last-child {
+            background: #EA580C;
+        }
+
+        .matrix-table tbody td {
+            height: 44px;
+            font-weight: 600;
+            background: #FFFFFF;
+        }
+
+        .matrix-table tbody td:first-child {
+            background: #FFFBF7;
+            color: #1F2937;
+        }
+
+        .matrix-table tbody td:last-child {
+            background: #FFF7ED;
+            color: #EA580C;
+        }
+
+        .matrix-table tbody tr:nth-child(even) td:not(:first-child):not(:last-child) {
+            background: #FFFDFB;
+        }
+
+        .matrix-table tbody tr:hover:not(.matrix-total-row) td {
+            background: #FFEDD5 !important;
+        }
+
+        .matrix-table tr.matrix-total-row td {
+            background: #FFEDD5 !important;
+            color: #EA580C !important;
+            font-weight: 800 !important;
+            height: 46px;
+            border-top: 2px solid #F97316 !important;
+        }
+
+        .matrix-table tr.matrix-total-row td:first-child {
+            background: #FED7AA !important;
+            color: #9A3412 !important;
+        }
+
+        .matrix-table tr.matrix-total-row td:last-child {
+            background: #F97316 !important;
+            color: #FFFFFF !important;
+        }
+
+        /* Standard Data Table (History & Value Summary) */
+        .std-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }
+
+        .std-table thead th {
+            background: #F97316;
+            color: #FFFFFF;
+            padding: 11px 10px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+
+        .std-table tbody td {
+            padding: 9px 10px;
+            border: 1px solid #FFEDD5;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .std-table tbody tr:hover:not(.std-total-row) td {
+            background: #FFF7ED;
+        }
+
+        .std-table tr.std-total-row td {
+            padding: 10px;
+            background: #FFEDD5 !important;
+            color: #EA580C !important;
+            font-weight: 800 !important;
+            border-top: 2px solid #F97316 !important;
+        }
+
+        .badge-zero {
+            color: #9CA3AF;
+            font-weight: 500;
+            display: inline-block;
+            min-width: 28px;
+        }
+
+        .badge-pending {
+            background: #FFEDD5;
+            color: #EA580C;
+            padding: 2px 8px;
+            border-radius: 14px;
+            font-weight: 800;
+            display: inline-block;
+            min-width: 30px;
+            border: 1px solid #FB923C;
+        }
+
+        .badge-done {
+            background: var(--success-bg);
+            color: var(--success);
+            padding: 2px 8px;
+            border-radius: 14px;
+            font-weight: 700;
+            display: inline-block;
+            min-width: 30px;
+        }
+
+        /* Quick Batch Entry Grid */
+        .items-entry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+            gap: 12px;
+            margin: 14px 0;
+        }
+
+        .item-input-box {
+            background: #FFFBF7;
+            border: 1.5px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 12px;
+            transition: all 0.2s;
+        }
+
+        .item-input-box:focus-within {
+            border-color: var(--primary);
+            background: #FFF7ED;
+            box-shadow: 0 3px 10px rgba(249, 115, 22, 0.14);
+        }
+
+        .item-input-box .item-name {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #EA580C;
+            margin-bottom: 4px;
+            display: block;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .item-input-box .item-bal-hint {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .item-input-box input {
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid #FDBA74;
+            border-radius: 8px;
+            font-family: 'Inter', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            color: #EA580C;
+        }
+
+        /* Backup Alert Banner */
+        .backup-banner {
+            background: #FEF3C7;
+            border: 1.5px solid #F59E0B;
+            color: #92400E;
+            padding: 10px 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 0.88rem;
+        }
+
+        /* Editable Balance Cell inside Settings */
+        .edit-bal-input {
+            width: 60px;
+            padding: 4px;
+            border: 1.5px solid #FDBA74;
+            border-radius: 6px;
+            text-align: center;
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 0.86rem;
+            color: #EA580C;
+            background: #FFFFFF;
+        }
+
+        .edit-bal-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: #FFF7ED;
+        }
+
+        /* Settings List Items */
+        .manage-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: #FFFBF7;
+            border: 1px solid #FED7AA;
+            border-radius: 9px;
+        }
+
+        .manage-item-name {
+            font-weight: 700;
+            color: #1F2937;
+            font-family: 'Inter', 'Cairo', sans-serif;
+            font-size: 0.9rem;
+            flex: 1;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 82px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #EA580C;
+            color: #FFFFFF;
+            padding: 11px 22px;
+            border-radius: 12px;
+            font-weight: 700;
+            box-shadow: var(--shadow-lg);
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            border: 1px solid #FFFFFF;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* توقيع المطور المصغر 25% بدون ألوان وبإطار خارجي أحمر وكتابة باللون الأزرق وكارت متطاير */
+        .signature-card {
+            position: fixed;
+            bottom: 16px;
+            left: 16px;
+            background: transparent;
+            color: #1D4ED8;
+            padding: 7.5px 13px;
+            border-radius: 7px;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 0.62rem;
+            font-weight: 700;
+            z-index: 1000;
+            animation: floatSig 5s ease-in-out infinite;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: 1.8px solid #DC2626;
+            text-decoration: none;
+            display: inline-block;
+            backdrop-filter: blur(3px);
+        }
+
+        .signature-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 22px rgba(220, 38, 38, 0.22);
+        }
+
+        @keyframes floatSig {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-11px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .signature-card .name {
+            font-size: 0.72rem;
+            font-weight: 800;
+            margin-bottom: 2px;
+            color: #1D4ED8;
+        }
+
+        .signature-card .title {
+            font-size: 0.54rem;
+            font-weight: 600;
+            color: #1D4ED8;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .app-header {
+                padding: 12px 14px;
+            }
+            .brand-title h1 {
+                font-size: 1.1rem;
+            }
+            .kpi-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .kpi-card {
+                padding: 14px;
+            }
+            .kpi-value {
+                font-size: 1.65rem;
+            }
+            .items-entry-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .matrix-table th:first-child,
+            .matrix-table td:first-child {
+                width: 165px;
+                min-width: 165px;
+            }
+            .signature-card {
+                position: relative;
+                bottom: auto;
+                left: auto;
+                margin: 20px auto 10px;
+                width: fit-content;
+                display: block;
+                text-align: center;
+                animation: floatSig 5s ease-in-out infinite;
+            }
+        }
+
+        @media print {
+            .signature-card, .nav-container, .header-actions, .no-print {
+                display: none !important;
+            }
         }
     </style>
 </head>
-<body class="flex items-center justify-center p-4 md:p-8 text-white relative">
+<body>
 
-    <!-- Decorative Floating Glowing Orbs -->
-    <div class="absolute top-1/4 left-10 w-72 h-72 bg-purple-600/30 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
-    <div class="absolute bottom-1/4 right-10 w-80 h-80 bg-blue-600/30 rounded-full blur-3xl pointer-events-none animate-pulse" style="animation-delay: 2s;"></div>
-
-    <!-- Main Maintenance Container -->
-    <main class="w-full max-w-4xl glass-card rounded-3xl p-6 md:p-12 text-center relative z-10 my-auto border border-white/10">
-        
-        <!-- Animated Icon Header -->
-        <div class="relative w-28 h-28 mx-auto mb-8 flex items-center justify-center float-gear">
-            <div class="absolute inset-0 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-full blur-lg opacity-50"></div>
-            <div class="relative w-full h-full rounded-2xl bg-slate-900/80 border border-white/20 flex items-center justify-center overflow-hidden">
-                <i class="fa-solid fa-gear text-5xl text-cyan-400 spin-slow absolute -top-1 -right-1 opacity-80"></i>
-                <i class="fa-solid fa-screwdriver-wrench text-4xl text-fuchsia-400 relative z-10"></i>
-                <i class="fa-solid fa-gear text-3xl text-indigo-400 spin-reverse absolute -bottom-2 -left-2 opacity-80"></i>
+    <!-- الهيدر الرئيسي -->
+    <header class="app-header">
+        <div class="header-inner">
+            <div class="brand-box">
+                <img src="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg" alt="Fondant Choco" class="brand-logo">
+                <div class="brand-title">
+                    <h1>Fondant Choco</h1>
+                    <span>نظام متابعة المرتجعات والتعويضات اليومية (صلاحية <span class="en-num">3</span> أيام)</span>
+                </div>
+            </div>
+            <div class="header-actions">
+                <button class="btn btn-header btn-sm" onclick="exportToPDF()">📄 تصدير PDF</button>
+                <button class="btn btn-header btn-sm" onclick="exportToExcel()">📊 تصدير Excel</button>
+                <button class="btn btn-header btn-sm" onclick="downloadBackupJSON()">💾 نسخة احتياطية</button>
+                <label class="btn btn-header btn-sm" style="cursor:pointer;">
+                    📂 استعادة
+                    <input type="file" id="restoreJsonInput" accept=".json" style="display:none" onchange="restoreBackupJSON(event)">
+                </label>
             </div>
         </div>
+    </header>
 
-        <!-- Arabic Message Header -->
-        <h1 class="text-3xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight glow-text tracking-wide">
-            الموقع تحت الصيانة
-        </h1>
-
-        <!-- Arabic Sub-message -->
-        <p class="text-xl md:text-3xl font-bold text-slate-200 mb-6 flex items-center justify-center gap-3 flex-wrap">
-            <span>انتظر قليلاً</span>
-            <span class="inline-block w-2 h-2 rounded-full bg-pink-500 animate-ping"></span>
-            <span class="text-cyan-400">جاري تحديث الموقع...</span>
-        </p>
-
-        <!-- Divider Line with Progress Animation -->
-        <div class="w-full max-w-md mx-auto bg-slate-800/80 h-2 rounded-full overflow-hidden mb-8 border border-white/5">
-            <div class="bg-gradient-to-r from-cyan-400 via-indigo-500 to-pink-500 h-full rounded-full progress-line"></div>
+    <!-- شريط التنقل (5 تبويبات) -->
+    <div class="nav-container">
+        <div id="backupBanner" class="backup-banner">
+            <span>⚠️ تنبيه: لم تقم بأخذ نسخة احتياطية للبيانات منذ أكثر من 24 ساعة. يُنصح بحفظ نسخة JSON الآن.</span>
+            <button class="btn btn-primary btn-sm" onclick="downloadBackupJSON()">حفظ النسخة الاحتياطية الآن</button>
         </div>
 
-        <!-- English Message Section -->
-        <div class="space-y-2 mb-10 dir-ltr font-sans">
-            <h2 class="text-xl md:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-100 via-purple-200 to-slate-300 tracking-wider uppercase">
-                Website Under Maintenance
-            </h2>
-            <p class="text-slate-400 text-sm md:text-lg font-medium">
-                Please wait a moment, we are updating the site for a better experience.
-            </p>
-        </div>
+        <nav class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard', this)">📊 لوحة المتابعة والأرصدة</button>
+            <button class="tab-btn" onclick="switchTab('movements', this)">🔄 تسجيل مرتجع / إرسال بديل</button>
+            <button class="tab-btn" onclick="switchTab('returns-value', this)">💰 ملخص قيمة المرتجعات</button>
+            <button class="tab-btn" onclick="switchTab('history', this)">📜 سجل الحركات اليومية</button>
+            <button class="tab-btn" onclick="switchTab('settings', this)">⚙️ الإعدادات والأرصدة الافتتاحية</button>
+        </nav>
+    </div>
 
-        <!-- Features / Status Chips -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto mb-8 text-sm">
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-bolt text-amber-400"></i>
-                <span>تحسين السرعة والأداء</span>
+    <!-- المحتوى الرئيسي -->
+    <main class="main-container">
+
+        <!-- 1. لوحة المتابعة والأرصدة المتبقية -->
+        <section id="tab-dashboard" class="section-panel active">
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-label">
+                        <span>إجمالي المتبقي المطلوب إرساله</span>
+                        <div class="kpi-icon">📦</div>
+                    </div>
+                    <div class="kpi-value en-num" id="kpiTotalPending">0</div>
+                    <div class="kpi-sub">قطعة مستحقة التعويض للعملاء</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">
+                        <span>رصيد البداية (22-11-2026)</span>
+                        <div class="kpi-icon">📅</div>
+                    </div>
+                    <div class="kpi-value en-num" id="kpiOpeningTotal">0</div>
+                    <div class="kpi-sub">مرتجعات 19 إلى 21-11-2026</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">
+                        <span>إجمالي المرتجعات المسجلة</span>
+                        <div class="kpi-icon">↩️</div>
+                    </div>
+                    <div class="kpi-value en-num" id="kpiTotalReturned">0</div>
+                    <div class="kpi-sub">منتهي الصلاحية تم إتلافه</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">
+                        <span>إجمالي ما تم إرساله (تعويض)</span>
+                        <div class="kpi-icon">🚚</div>
+                    </div>
+                    <div class="kpi-value en-num" id="kpiTotalSent">0</div>
+                    <div class="kpi-sub">أصناف بديلة تم تسليمها</div>
+                </div>
             </div>
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-shield-halved text-emerald-400"></i>
-                <span>تحديثات الأمان</span>
-            </div>
-            <div class="p-3 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm flex items-center justify-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i>
-                <span>ميزات جديدة قريباً</span>
-            </div>
-        </div>
 
-        <!-- Developer Contact Action Button -->
-        <div class="pt-2">
-            <a href="tel:67011143" class="inline-flex px-8 py-3.5 rounded-full bg-gradient-to-r from-cyan-500 to-indigo-600 hover:from-cyan-400 hover:to-indigo-500 text-white font-bold text-base shadow-lg shadow-indigo-500/30 hover:shadow-cyan-500/50 hover:scale-105 active:scale-95 transition-all duration-300 items-center justify-center gap-2 mx-auto">
-                <i class="fa-solid fa-headset"></i>
-                <span>مراجعة المطور Yasser 67011143</span>
-            </a>
-        </div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📋 جدول الأرصدة المتبقية (المطلوب إرساله لكل عميل)</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;" class="search-select-wrap">
+                        <input type="text" id="dashboardSearch" class="form-control" placeholder="🔍 بحث باسم العميل..." autocomplete="off"
+                               style="width:240px; padding:7px 12px;"
+                               onfocus="openGenericDropdown('dashboardSearch', 'dashboardSearchList')"
+                               oninput="filterGenericDropdown('dashboardSearch', 'dashboardSearchList', () => renderDashboardMatrix())"
+                               onkeydown="handleGenericKeydown(event, 'dashboardSearchList')">
+                        <div id="dashboardSearchList" class="search-dropdown-list"></div>
+
+                        <label style="font-size:0.85rem; font-weight:700; color:#EA580C; display:flex; align-items:center; gap:5px; cursor:pointer;">
+                            <input type="checkbox" id="hideZeroClients" onchange="renderDashboardMatrix()"> إخفاء العملاء الصفريين
+                        </label>
+                    </div>
+                </div>
+                <div class="table-responsive" id="dashboardMatrixWrap">
+                    <table class="matrix-table" id="dashboardMatrixTable"></table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. تسجيل حركة يومية (مرتجع منتهي الصلاحية أو إرسال بديل) -->
+        <section id="tab-movements" class="section-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">🔄 تسجيل حركة يومية جديدة</div>
+                    <span style="font-size:0.85rem; color:var(--primary); font-weight:700;">💡 التنقل السريع: اضغط Enter أو الأسهم للانتقال بين الخانات</span>
+                </div>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>نوع الحركة *</label>
+                        <select id="movType" class="form-control" onchange="updateMovementUI()">
+                            <option value="RETURN">↩️ استلام مرتجع منتهي الصلاحية (يزيد الرصيد المطلوب)</option>
+                            <option value="SENT">🚚 إرسال أصناف بديلة للعميل (يخصم من المتبقي)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>التاريخ *</label>
+                        <input type="date" id="movDate" class="form-control">
+                    </div>
+
+                    <div class="form-group search-select-wrap">
+                        <label>العميل * (ابحث حرف بحرف)</label>
+                        <input type="text" id="movClientInput" class="form-control" placeholder="اكتب اسم العميل..." autocomplete="off"
+                               onfocus="openClientDropdown()" oninput="filterClientDropdown()" onkeydown="handleClientKeydown(event)">
+                        <input type="hidden" id="movClientSelected">
+                        <div id="clientDropdownList" class="search-dropdown-list"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>ملاحظات / رقم السند (اختياري)</label>
+                        <input type="text" id="movNote" class="form-control" placeholder="مثال: مرتجع صباحي / سيارة 2">
+                    </div>
+                </div>
+
+                <div id="movClientSummaryBar" style="background:var(--primary-soft); padding:10px 14px; border-radius:10px; margin-bottom:12px; display:none; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                    <span style="font-weight:800; color:#EA580C;" id="selectedClientTitle"></span>
+                    <button type="button" class="btn btn-outline btn-sm" id="fillRemainingBtn" onclick="autoFillRemainingForClient()">⚡ تعبئة كامل المتبقي تلقائياً للإرسال</button>
+                </div>
+
+                <div class="items-entry-grid" id="movItemsGrid"></div>
+
+                <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-top:16px; padding-top:14px; border-top:1.5px solid var(--border-color);">
+                    <div style="font-weight:800; font-size:1rem; color:#EA580C;">
+                        إجمالي الكمية المدخلة: <span id="movTotalQtyDisplay" class="en-num" style="font-size:1.25rem; color:var(--primary);">0</span> قطعة
+                    </div>
+                    <div style="display:flex; gap:10px;">
+                        <button type="button" class="btn btn-outline" onclick="clearMovementInputs()">🗑️ تفريغ الخانات</button>
+                        <button type="button" class="btn btn-primary" onclick="saveMovement()">✅ حفظ الحركة وتحديث الأرصدة</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. ملخص قيمة مرتجعات كل مستشفى خلال الفترة من الملف المرفق بالأسعار -->
+        <section id="tab-returns-value" class="section-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">💰 ملخص قيمة مرتجعات كل مستشفى خلال الفترة (<span class="en-num">19- to 21-11-2026</span>) بالأسعار</div>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;" class="search-select-wrap">
+                        <input type="text" id="valueSearchInput" class="form-control" placeholder="🔍 بحث باسم المستشفى..." autocomplete="off"
+                               style="width:240px; padding:7px 12px;"
+                               onfocus="openGenericDropdown('valueSearchInput', 'valueSearchList')"
+                               oninput="filterGenericDropdown('valueSearchInput', 'valueSearchList', () => renderReturnsValueTable())"
+                               onkeydown="handleGenericKeydown(event, 'valueSearchList')">
+                        <div id="valueSearchList" class="search-dropdown-list"></div>
+                    </div>
+                </div>
+
+                <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px; font-weight:600;">
+                    يعتمد هذا الملخص على أعداد المرتجعات في الملف للفترة <span class="en-num">19- to 21-11-2026</span> مضروبة في أسعار الوحدات المعتمدة (ويمكنك تعديل سعر أي صنف من جدول الأسعار أدناه لتحديث القيم فوراً).
+                </p>
+
+                <div class="table-responsive" style="margin-bottom:20px;">
+                    <table class="std-table" id="returnsValueSummaryTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th style="text-align:right;">المستشفى / العميل</th>
+                                <th>إجمالي الكمية المرتجعة</th>
+                                <th>إجمالي القيمة</th>
+                                <th>تفاصيل الأصناف والقيم</th>
+                            </tr>
+                        </thead>
+                        <tbody id="returnsValueSummaryBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="card" style="background:#FFFBF7; margin-bottom:0;">
+                    <div class="card-header" style="margin-bottom:10px; padding-bottom:8px;">
+                        <div class="card-title" style="font-size:1rem;">🏷️ جدول أسعار الأصناف المعتمدة (يمكن التعديل مباشرة)</div>
+                    </div>
+                    <div class="items-entry-grid" id="unitPricesGrid"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. سجل الحركات اليومية -->
+        <section id="tab-history" class="section-panel">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📜 سجل الحركات اليومية (المرتجعات والتعويضات المرسلة)</div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                        <select id="historyFilterType" class="form-control" style="width:170px; padding:7px 10px;" onchange="renderHistoryTable()">
+                            <option value="ALL">جميع الحركات</option>
+                            <option value="RETURN">المرتجعات فقط</option>
+                            <option value="SENT">المرسل (تعويض) فقط</option>
+                        </select>
+                        <div class="search-select-wrap">
+                            <input type="text" id="historySearch" class="form-control" placeholder="🔍 بحث بالعميل أو التاريخ..." autocomplete="off"
+                                   style="width:230px; padding:7px 12px;"
+                                   onfocus="openGenericDropdown('historySearch', 'historySearchList')"
+                                   oninput="filterGenericDropdown('historySearch', 'historySearchList', () => renderHistoryTable())"
+                                   onkeydown="handleGenericKeydown(event, 'historySearchList')">
+                            <div id="historySearchList" class="search-dropdown-list"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="std-table" id="historyTable">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>العميل</th>
+                                <th>نوع الحركة</th>
+                                <th>تفاصيل الأصناف والكميات</th>
+                                <th>الإجمالي</th>
+                                <th>ملاحظات</th>
+                                <th>إجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. الإعدادات (إدارة وتعديل العملاء والأصناف + الرصيد الافتتاحي 22-11-2026) -->
+        <section id="tab-settings" class="section-panel">
+            <div class="form-grid" style="grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));">
+                <!-- إدارة العملاء -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🏥 إدارة العملاء (<span class="en-num" id="clientsCountBadge">0</span>)</div>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-bottom:14px;">
+                        <input type="text" id="newClientName" class="form-control" placeholder="اسم العميل الجديد...">
+                        <button class="btn btn-primary" onclick="addNewClient()">+ إضافة</button>
+                    </div>
+                    <div id="clientsManageList" style="max-height:330px; overflow-y:auto; display:flex; flex-direction:column; gap:7px;"></div>
+                </div>
+
+                <!-- إدارة الأصناف -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🥐 إدارة المنتجات (<span class="en-num" id="productsCountBadge">0</span>)</div>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-bottom:14px;">
+                        <input type="text" id="newProductName" class="form-control" placeholder="اسم الصنف الجديد...">
+                        <button class="btn btn-primary" onclick="addNewProduct()">+ إضافة</button>
+                    </div>
+                    <div id="productsManageList" style="max-height:330px; overflow-y:auto; display:flex; flex-direction:column; gap:7px;"></div>
+                </div>
+            </div>
+
+            <!-- الرصيد الافتتاحي 22-11-2026 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">⚖️ الرصيد الافتتاحي المحفوظ بتاريخ <span class="en-num">22-11-2026</span></div>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-success" onclick="saveOpeningBalancesEdits()">💾 حفظ التعديلات على الرصيد الافتتاحي</button>
+                        <button class="btn btn-outline" onclick="resetOpeningToExcelDefault()">↺ استعادة أرقام الإكسل الأصلية</button>
+                    </div>
+                </div>
+                <p style="font-size:0.86rem; color:var(--text-muted); margin-bottom:14px; font-weight:600;">
+                    هذه الأرقام تمثل المرتجعات الناقصة (من <span class="en-num">19</span> إلى <span class="en-num">21-11-2026</span>) والمعتمدة كرصيد افتتاحي ليوم <span class="en-num">22-11-2026</span>. يمكنك تعديل أي رقم مباشرة ثم الضغط على "حفظ التعديلات".
+                </p>
+                <div class="table-responsive">
+                    <table class="matrix-table" id="openingBalancesTable"></table>
+                </div>
+            </div>
+        </section>
 
     </main>
 
-    <!-- Footer Copyright / Branding -->
-    <footer class="absolute bottom-4 text-center w-full text-xs text-slate-500 font-light z-10">
-        &copy; <span id="year"></span> جميع الحقوق محفوظة | All rights reserved
-    </footer>
+    <!-- إشعار Toast -->
+    <div id="toast" class="toast"></div>
 
-    <!-- Interactive Script -->
+    <!-- توقيع المطور -->
+    <a href="https://yasser-q8.github.io/myprofile/#" class="signature-card" target="_blank" rel="noopener noreferrer">
+        <div class="name">Yasser Elkhateeb</div>
+        <div class="title">مطور البرنامج 67011143</div>
+    </a>
+
     <script>
-        // Set Current Year dynamically
-        document.getElementById('year').textContent = new Date().getFullYear();
+        const DEFAULT_CLIENTS = [
+            "Addiction Treatment Center - ATC",
+            "Al Omooma Hospital",
+            "Al-Adan Hospital",
+            "Al-Jahra Hospital",
+            "Al-Razi Hospital",
+            "College of Health Sciences - Boys",
+            "College of Technological Studies - Girls",
+            "Hamed Al-Eissa Hospital",
+            "Higher Institute of Energy - HIE",
+            "Hisham Al-Sager Hospital",
+            "Hya Elhabib Hospital",
+            "Ministry of Health",
+            "NBK Hospital",
+            "New Al-Razi Hospital",
+            "Physiology Hospital"
+        ];
+
+        const DEFAULT_PRODUCTS = [
+            "Sandwiches",
+            "Sweet Graham",
+            "Croll",
+            "Saj",
+            "Grape Leaves",
+            "Mohalabiya",
+            "Brownies Cups",
+            "Saffron Cake",
+            "Tiramisu Cheesecake",
+            "Turkey Kaak",
+            "Halloum Kaak",
+            "Strawberry Cheesecake",
+            "Chocolate Cheesecake"
+        ];
+
+        const DEFAULT_UNIT_PRICES = {
+            "Sandwiches": 0.500,
+            "Sweet Graham": 0.600,
+            "Croll": 0.500,
+            "Saj": 0.500,
+            "Grape Leaves": 0.450,
+            "Mohalabiya": 0.500,
+            "Brownies Cups": 0.500,
+            "Saffron Cake": 0.500,
+            "Tiramisu Cheesecake": 0.450,
+            "Turkey Kaak": 0.500,
+            "Halloum Kaak": 0.500,
+            "Strawberry Cheesecake": 0.450,
+            "Chocolate Cheesecake": 0.450
+        };
+
+        const DEFAULT_OPENING_22_11_2026 = {
+            "Addiction Treatment Center - ATC": { "Sandwiches": 15, "Halloum Kaak": 2 },
+            "Al Omooma Hospital": { "Sandwiches": 2, "Brownies Cups": 1 },
+            "Al-Adan Hospital": { "Sandwiches": 7, "Croll": 5, "Grape Leaves": 5 },
+            "Al-Jahra Hospital": { "Sandwiches": 15, "Grape Leaves": 1 },
+            "Al-Razi Hospital": { "Sandwiches": 6, "Croll": 1, "Grape Leaves": 1 },
+            "College of Health Sciences - Boys": {},
+            "College of Technological Studies - Girls": { "Sandwiches": 4 },
+            "Hamed Al-Eissa Hospital": { "Sandwiches": 11, "Croll": 5, "Grape Leaves": 2, "Tiramisu Cheesecake": 1, "Halloum Kaak": 1 },
+            "Higher Institute of Energy - HIE": { "Sandwiches": 5, "Saj": 1 },
+            "Hisham Al-Sager Hospital": { "Sandwiches": 4, "Saj": 2 },
+            "Hya Elhabib Hospital": { "Sandwiches": 14, "Croll": 1, "Grape Leaves": 1, "Halloum Kaak": 1 },
+            "Ministry of Health": { "Sandwiches": 12, "Croll": 3, "Saj": 7, "Grape Leaves": 1, "Brownies Cups": 1, "Saffron Cake": 1 },
+            "NBK Hospital": { "Sandwiches": 2 },
+            "New Al-Razi Hospital": { "Sandwiches": 4 },
+            "Physiology Hospital": { "Sandwiches": 6, "Grape Leaves": 2, "Saffron Cake": 1 }
+        };
+
+        const STORAGE_KEY = 'fondant_choco_returns_v2';
+
+        let appState = {
+            openingDate: '2026-11-22',
+            clients: [],
+            products: [],
+            unitPrices: {},
+            openingBalances: {},
+            movements: [],
+            lastBackup: null
+        };
+
+        function buildFullOpeningMap(clients, products, partialMap) {
+            const full = {};
+            clients.forEach(c => {
+                full[c] = {};
+                products.forEach(p => {
+                    full[c][p] = (partialMap[c] && typeof partialMap[c][p] === 'number') ? partialMap[c][p] : 0;
+                });
+            });
+            return full;
+        }
+
+        function buildPricesMap(products, savedPrices) {
+            const prices = {};
+            products.forEach(p => {
+                if (savedPrices && typeof savedPrices[p] === 'number') {
+                    prices[p] = savedPrices[p];
+                } else if (DEFAULT_UNIT_PRICES[p] !== undefined) {
+                    prices[p] = DEFAULT_UNIT_PRICES[p];
+                } else {
+                    prices[p] = 0.500;
+                }
+            });
+            return prices;
+        }
+
+        function loadState() {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    const clients = parsed.clients || [...DEFAULT_CLIENTS];
+                    const products = parsed.products || [...DEFAULT_PRODUCTS];
+                    appState = {
+                        openingDate: parsed.openingDate || '2026-11-22',
+                        clients,
+                        products,
+                        unitPrices: buildPricesMap(products, parsed.unitPrices),
+                        openingBalances: parsed.openingBalances || buildFullOpeningMap(clients, products, DEFAULT_OPENING_22_11_2026),
+                        movements: parsed.movements || [],
+                        lastBackup: parsed.lastBackup || null
+                    };
+                } catch (e) {
+                    initDefaultState();
+                }
+            } else {
+                initDefaultState();
+            }
+            checkBackupReminder();
+        }
+
+        function initDefaultState() {
+            appState = {
+                openingDate: '2026-11-22',
+                clients: [...DEFAULT_CLIENTS],
+                products: [...DEFAULT_PRODUCTS],
+                unitPrices: buildPricesMap(DEFAULT_PRODUCTS, DEFAULT_UNIT_PRICES),
+                openingBalances: buildFullOpeningMap(DEFAULT_CLIENTS, DEFAULT_PRODUCTS, DEFAULT_OPENING_22_11_2026),
+                movements: [],
+                lastBackup: new Date().toISOString()
+            };
+            saveState();
+        }
+
+        function saveState() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+            checkBackupReminder();
+        }
+
+        function checkBackupReminder() {
+            const banner = document.getElementById('backupBanner');
+            if (!appState.lastBackup) {
+                banner.style.display = 'flex';
+                return;
+            }
+            const diffHours = (Date.now() - new Date(appState.lastBackup).getTime()) / (1000 * 60 * 60);
+            banner.style.display = diffHours >= 24 ? 'flex' : 'none';
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3200);
+        }
+
+        function calculateBalances() {
+            const opening = {};
+            const returned = {};
+            const sent = {};
+            const remaining = {};
+
+            appState.clients.forEach(c => {
+                opening[c] = {};
+                returned[c] = {};
+                sent[c] = {};
+                remaining[c] = {};
+                appState.products.forEach(p => {
+                    const opVal = (appState.openingBalances[c] && appState.openingBalances[c][p]) ? Number(appState.openingBalances[c][p]) : 0;
+                    opening[c][p] = opVal;
+                    returned[c][p] = 0;
+                    sent[c][p] = 0;
+                    remaining[c][p] = opVal;
+                });
+            });
+
+            appState.movements.forEach(m => {
+                if (!remaining[m.client]) return;
+                Object.entries(m.items || {}).forEach(([prod, qty]) => {
+                    const q = Number(qty) || 0;
+                    if (q <= 0 || remaining[m.client][prod] === undefined) return;
+                    if (m.type === 'RETURN') {
+                        returned[m.client][prod] += q;
+                        remaining[m.client][prod] += q;
+                    } else if (m.type === 'SENT') {
+                        sent[m.client][prod] += q;
+                        remaining[m.client][prod] -= q;
+                    }
+                });
+            });
+
+            return { opening, returned, sent, remaining };
+        }
+
+        function switchTab(tabId, btnEl) {
+            document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btnEl.classList.add('active');
+
+            if (tabId === 'dashboard') renderDashboardMatrix();
+            if (tabId === 'movements') renderMovementItemsGrid();
+            if (tabId === 'returns-value') renderReturnsValueTable();
+            if (tabId === 'history') renderHistoryTable();
+            if (tabId === 'settings') {
+                renderSettingsLists();
+                renderOpeningBalancesTable();
+            }
+        }
+
+        // قوائم منسدلة للبحث حرف بحرف في كل مربعات البحث
+        let genericHighlightIdx = -1;
+
+        function openGenericDropdown(inputId, listId) {
+            const list = document.getElementById(listId);
+            const q = (document.getElementById(inputId).value || '').toLowerCase().trim();
+            const matches = appState.clients.filter(c => c.toLowerCase().includes(q));
+            genericHighlightIdx = -1;
+
+            if (matches.length === 0) {
+                list.innerHTML = '<div class="search-dropdown-item" style="color:#9CA3AF;">لا يوجد مطابق</div>';
+            } else {
+                list.innerHTML = matches.map(c => `
+                    <div class="search-dropdown-item" onclick="pickGenericItem('${inputId}', '${listId}', '${c.replace(/'/g, "\\'")}')">
+                        <span>${c}</span>
+                    </div>
+                `).join('');
+            }
+            document.querySelectorAll('.search-dropdown-list').forEach(l => l.classList.remove('open'));
+            list.classList.add('open');
+        }
+
+        function filterGenericDropdown(inputId, listId, onFilterCb) {
+            openGenericDropdown(inputId, listId);
+            if (typeof onFilterCb === 'function') onFilterCb();
+        }
+
+        function pickGenericItem(inputId, listId, val) {
+            const inp = document.getElementById(inputId);
+            inp.value = val;
+            document.getElementById(listId).classList.remove('open');
+            inp.dispatchEvent(new Event('input'));
+        }
+
+        function handleGenericKeydown(e, listId) {
+            const list = document.getElementById(listId);
+            const items = list.querySelectorAll('.search-dropdown-item');
+            if (!list.classList.contains('open')) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                genericHighlightIdx = Math.min(genericHighlightIdx + 1, items.length - 1);
+                items.forEach((el, i) => el.classList.toggle('highlighted', i === genericHighlightIdx));
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                genericHighlightIdx = Math.max(genericHighlightIdx - 1, 0);
+                items.forEach((el, i) => el.classList.toggle('highlighted', i === genericHighlightIdx));
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (genericHighlightIdx >= 0 && items[genericHighlightIdx]) {
+                    items[genericHighlightIdx].click();
+                } else {
+                    list.classList.remove('open');
+                }
+            }
+        }
+
+        // 1. لوحة المتابعة والمصفوفة المنسقة أفقياً بالكامل
+        function renderDashboardMatrix() {
+            const { opening, returned, sent, remaining } = calculateBalances();
+            let grandOpening = 0, grandReturned = 0, grandSent = 0, grandRemaining = 0;
+
+            appState.clients.forEach(c => {
+                appState.products.forEach(p => {
+                    grandOpening += opening[c][p];
+                    grandReturned += returned[c][p];
+                    grandSent += sent[c][p];
+                    grandRemaining += remaining[c][p];
+                });
+            });
+
+            document.getElementById('kpiTotalPending').textContent = grandRemaining;
+            document.getElementById('kpiOpeningTotal').textContent = grandOpening;
+            document.getElementById('kpiTotalReturned').textContent = grandReturned;
+            document.getElementById('kpiTotalSent').textContent = grandSent;
+
+            const search = (document.getElementById('dashboardSearch').value || '').toLowerCase().trim();
+            const hideZero = document.getElementById('hideZeroClients').checked;
+            const table = document.getElementById('dashboardMatrixTable');
+
+            let thead = '<thead><tr><th>العميل / المستشفى</th>';
+            appState.products.forEach(p => {
+                thead += `<th>${p}</th>`;
+            });
+            thead += '<th>الإجمالي</th></tr></thead>';
+
+            const colTotals = {};
+            appState.products.forEach(p => colTotals[p] = 0);
+            let totalOfFiltered = 0;
+
+            let tbody = '<tbody>';
+            appState.clients.forEach(c => {
+                if (search && !c.toLowerCase().includes(search)) return;
+                let rowSum = 0;
+                appState.products.forEach(p => {
+                    rowSum += remaining[c][p];
+                });
+                if (hideZero && rowSum === 0) return;
+
+                tbody += `<tr><td title="${c}">${c}</td>`;
+                appState.products.forEach(p => {
+                    const val = remaining[c][p];
+                    colTotals[p] += val;
+                    if (val > 0) {
+                        tbody += `<td><span class="badge-pending en-num">${val}</span></td>`;
+                    } else if (val < 0) {
+                        tbody += `<td style="color:#DC2626;" class="en-num">${val}</td>`;
+                    } else {
+                        tbody += `<td><span class="badge-zero en-num">0</span></td>`;
+                    }
+                });
+                totalOfFiltered += rowSum;
+                tbody += `<td>${rowSum > 0 ? `<span class="badge-pending en-num" style="background:#F97316; color:#fff; border-color:#EA580C;">${rowSum}</span>` : `<span class="badge-done en-num">0</span>`}</td></tr>`;
+            });
+
+            // صف المجموع في نفس tbody لضمان المحاذاة الأفقية 100%
+            tbody += '<tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
+            appState.products.forEach(p => {
+                tbody += `<td class="en-num">${colTotals[p]}</td>`;
+            });
+            tbody += `<td class="en-num" style="font-size:1rem;">${totalOfFiltered}</td></tr></tbody>`;
+
+            table.innerHTML = thead + tbody;
+        }
+
+        // 2. القائمة المنسدلة للبحث حرف بحرف عن العميل
+        let highlightedIndex = -1;
+
+        function openClientDropdown() {
+            filterClientDropdown();
+            document.querySelectorAll('.search-dropdown-list').forEach(l => l.classList.remove('open'));
+            document.getElementById('clientDropdownList').classList.add('open');
+        }
+
+        function filterClientDropdown() {
+            const q = document.getElementById('movClientInput').value.toLowerCase().trim();
+            const list = document.getElementById('clientDropdownList');
+            const { remaining } = calculateBalances();
+
+            const filtered = appState.clients.filter(c => c.toLowerCase().includes(q));
+            highlightedIndex = -1;
+
+            if (filtered.length === 0) {
+                list.innerHTML = '<div class="search-dropdown-item" style="color:#9CA3AF;">لا يوجد عميل مطابق</div>';
+            } else {
+                list.innerHTML = filtered.map(c => {
+                    const remSum = appState.products.reduce((acc, p) => acc + (remaining[c][p] || 0), 0);
+                    return `<div class="search-dropdown-item" onclick="selectClient('${c.replace(/'/g, "\\'")}')">
+                        <span>${c}</span>
+                        <span class="badge-pending en-num" style="font-size:0.78rem;">متبقي: ${remSum}</span>
+                    </div>`;
+                }).join('');
+            }
+            list.classList.add('open');
+        }
+
+        function handleClientKeydown(e) {
+            const list = document.getElementById('clientDropdownList');
+            const items = list.querySelectorAll('.search-dropdown-item');
+            if (!list.classList.contains('open')) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                highlightedIndex = Math.min(highlightedIndex + 1, items.length - 1);
+                updateDropdownHighlight(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                highlightedIndex = Math.max(highlightedIndex - 1, 0);
+                updateDropdownHighlight(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (highlightedIndex >= 0 && items[highlightedIndex]) {
+                    items[highlightedIndex].click();
+                } else if (items.length === 1) {
+                    items[0].click();
+                }
+            }
+        }
+
+        function updateDropdownHighlight(items) {
+            items.forEach((el, idx) => {
+                el.classList.toggle('highlighted', idx === highlightedIndex);
+                if (idx === highlightedIndex) el.scrollIntoView({ block: 'nearest' });
+            });
+        }
+
+        function selectClient(clientName) {
+            document.getElementById('movClientInput').value = clientName;
+            document.getElementById('movClientSelected').value = clientName;
+            document.getElementById('clientDropdownList').classList.remove('open');
+            updateMovementUI();
+            const firstInput = document.querySelector('#movItemsGrid input');
+            if (firstInput) firstInput.focus();
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.search-select-wrap')) {
+                document.querySelectorAll('.search-dropdown-list').forEach(l => l.classList.remove('open'));
+            }
+        });
+
+        function updateMovementUI() {
+            const client = document.getElementById('movClientSelected').value;
+            const type = document.getElementById('movType').value;
+            const bar = document.getElementById('movClientSummaryBar');
+            const fillBtn = document.getElementById('fillRemainingBtn');
+
+            if (client && appState.clients.includes(client)) {
+                bar.style.display = 'flex';
+                const { remaining } = calculateBalances();
+                const remTotal = appState.products.reduce((sum, p) => sum + (remaining[client][p] || 0), 0);
+                document.getElementById('selectedClientTitle').innerHTML = `العميل المحدد: ${client} — إجمالي المتبقي له حالياً: <span class="en-num">${remTotal}</span> قطعة`;
+                fillBtn.style.display = (type === 'SENT' && remTotal > 0) ? 'inline-flex' : 'none';
+            } else {
+                bar.style.display = 'none';
+            }
+            renderMovementItemsGrid();
+        }
+
+        function renderMovementItemsGrid() {
+            const client = document.getElementById('movClientSelected').value;
+            const { remaining } = calculateBalances();
+            const grid = document.getElementById('movItemsGrid');
+
+            const currentVals = {};
+            grid.querySelectorAll('input[data-prod]').forEach(inp => {
+                currentVals[inp.dataset.prod] = inp.value;
+            });
+
+            grid.innerHTML = appState.products.map((prod, idx) => {
+                const rem = (client && remaining[client]) ? remaining[client][prod] : 0;
+                const val = currentVals[prod] || '';
+                return `
+                    <div class="item-input-box">
+                        <span class="item-name">${prod}</span>
+                        <span class="item-bal-hint">المتبقي للعميل: <strong class="en-num" style="color:${rem > 0 ? '#EA580C' : '#6B7280'}">${rem}</strong></span>
+                        <input type="number" min="0" step="1" data-prod="${prod}" data-idx="${idx}" value="${val}"
+                               oninput="updateMovTotalQty()" onkeydown="handleItemGridKeydown(event, ${idx})">
+                    </div>
+                `;
+            }).join('');
+            updateMovTotalQty();
+        }
+
+        function handleItemGridKeydown(e, idx) {
+            const inputs = Array.from(document.querySelectorAll('#movItemsGrid input'));
+            if (e.key === 'Enter' || e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (idx + 1 < inputs.length) {
+                    inputs[idx + 1].focus();
+                    inputs[idx + 1].select();
+                } else {
+                    saveMovement();
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (idx - 1 >= 0) {
+                    inputs[idx - 1].focus();
+                    inputs[idx - 1].select();
+                }
+            }
+        }
+
+        function updateMovTotalQty() {
+            let sum = 0;
+            document.querySelectorAll('#movItemsGrid input').forEach(inp => {
+                sum += Math.max(0, parseInt(inp.value) || 0);
+            });
+            document.getElementById('movTotalQtyDisplay').textContent = sum;
+        }
+
+        function autoFillRemainingForClient() {
+            const client = document.getElementById('movClientSelected').value;
+            if (!client) return;
+            const { remaining } = calculateBalances();
+            document.querySelectorAll('#movItemsGrid input').forEach(inp => {
+                const p = inp.dataset.prod;
+                const rem = remaining[client][p] || 0;
+                inp.value = rem > 0 ? rem : '';
+            });
+            updateMovTotalQty();
+            showToast('تمت تعبئة كامل الكميات المتبقية للعميل');
+        }
+
+        function clearMovementInputs() {
+            document.querySelectorAll('#movItemsGrid input').forEach(inp => inp.value = '');
+            document.getElementById('movNote').value = '';
+            updateMovTotalQty();
+        }
+
+        function saveMovement() {
+            const type = document.getElementById('movType').value;
+            const date = document.getElementById('movDate').value;
+            const clientInput = document.getElementById('movClientInput').value.trim();
+            const matchedClient = appState.clients.find(c => c.toLowerCase() === clientInput.toLowerCase());
+
+            if (!date) {
+                showToast('⚠️ يرجى تحديد التاريخ');
+                return;
+            }
+            if (!matchedClient) {
+                showToast('⚠️ يرجى اختيار عميل صحيح من القائمة');
+                document.getElementById('movClientInput').focus();
+                return;
+            }
+
+            const items = {};
+            let totalQty = 0;
+            document.querySelectorAll('#movItemsGrid input').forEach(inp => {
+                const q = Math.max(0, parseInt(inp.value) || 0);
+                if (q > 0) {
+                    items[inp.dataset.prod] = q;
+                    totalQty += q;
+                }
+            });
+
+            if (totalQty === 0) {
+                showToast('⚠️ يرجى إدخال كمية لصنف واحد على الأقل');
+                return;
+            }
+
+            appState.movements.unshift({
+                id: 'MOV-' + Date.now(),
+                date,
+                type,
+                client: matchedClient,
+                items,
+                totalQty,
+                note: document.getElementById('movNote').value.trim()
+            });
+
+            saveState();
+            clearMovementInputs();
+            updateMovementUI();
+            renderDashboardMatrix();
+            showToast(type === 'RETURN' ? '✅ تم تسجيل المرتجع وإضافته للرصيد المطلوب' : '✅ تم تسجيل الإرسال وخصمه من المتبقي');
+        }
+
+        // 3. صفحة ملخص قيمة مرتجعات كل مستشفى خلال الفترة من الملف المرفق بالأسعار
+        function renderReturnsValueTable() {
+            const search = (document.getElementById('valueSearchInput').value || '').toLowerCase().trim();
+            const tbody = document.getElementById('returnsValueSummaryBody');
+
+            let grandQty = 0;
+            let grandValue = 0;
+            let rowsHtml = '';
+            let rowNum = 0;
+
+            appState.clients.forEach(c => {
+                let cQty = 0;
+                let cVal = 0;
+                const details = [];
+
+                appState.products.forEach(p => {
+                    const qty = (appState.openingBalances[c] && appState.openingBalances[c][p]) ? Number(appState.openingBalances[c][p]) : 0;
+                    const price = appState.unitPrices[p] !== undefined ? Number(appState.unitPrices[p]) : 0.500;
+                    if (qty > 0) {
+                        const itemVal = qty * price;
+                        cQty += qty;
+                        cVal += itemVal;
+                        details.push(`${p} (${qty} × ${price.toFixed(3)} = ${itemVal.toFixed(3)})`);
+                    }
+                });
+
+                grandQty += cQty;
+                grandValue += cVal;
+
+                if (search && !c.toLowerCase().includes(search)) return;
+                rowNum++;
+
+                rowsHtml += `<tr>
+                    <td class="en-num">${rowNum}</td>
+                    <td style="text-align:right; font-weight:700;">${c}</td>
+                    <td class="en-num" style="font-weight:800;">${cQty}</td>
+                    <td class="en-num" style="font-weight:800; color:#EA580C;">${cVal.toFixed(3)}</td>
+                    <td style="text-align:left; direction:ltr; font-family:'Inter',sans-serif; font-size:0.82rem;">${details.length ? details.join(' | ') : '-'}</td>
+                </tr>`;
+            });
+
+            rowsHtml += `<tr class="std-total-row">
+                <td colspan="2" style="text-align:right;">الإجمالي الكلي للفترة (19- to 21-11-2026)</td>
+                <td class="en-num">${grandQty}</td>
+                <td class="en-num" style="background:#F97316 !important; color:#FFFFFF !important;">${grandValue.toFixed(3)}</td>
+                <td></td>
+            </tr>`;
+
+            tbody.innerHTML = rowsHtml;
+            renderUnitPricesGrid();
+        }
+
+        function renderUnitPricesGrid() {
+            const grid = document.getElementById('unitPricesGrid');
+            grid.innerHTML = appState.products.map(p => {
+                const price = appState.unitPrices[p] !== undefined ? Number(appState.unitPrices[p]).toFixed(3) : '0.500';
+                return `
+                    <div class="item-input-box">
+                        <span class="item-name">${p}</span>
+                        <span class="item-bal-hint">سعر الوحدة</span>
+                        <input type="number" step="0.001" min="0" value="${price}" onchange="updateUnitPrice('${p.replace(/'/g, "\\'")}', this.value)">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateUnitPrice(prod, newVal) {
+            const parsed = parseFloat(newVal);
+            appState.unitPrices[prod] = isNaN(parsed) || parsed < 0 ? 0 : parsed;
+            saveState();
+            renderReturnsValueTable();
+            showToast(`✅ تم تحديث سعر ${prod}`);
+        }
+
+        // 4. سجل الحركات اليومية
+        function renderHistoryTable() {
+            const typeFilter = document.getElementById('historyFilterType').value;
+            const search = (document.getElementById('historySearch').value || '').toLowerCase().trim();
+            const tbody = document.getElementById('historyTableBody');
+
+            const filtered = appState.movements.filter(m => {
+                if (typeFilter !== 'ALL' && m.type !== typeFilter) return false;
+                if (search && !m.client.toLowerCase().includes(search) && !m.date.includes(search) && !(m.note || '').toLowerCase().includes(search)) return false;
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:24px; color:#6B7280;">لا توجد حركات مسجلة حتى الآن</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(m => {
+                const itemsText = Object.entries(m.items).map(([p, q]) => `<span style="background:#FFF7ED; border:1px solid #FDBA74; padding:2px 7px; border-radius:6px; margin:2px; display:inline-block; font-size:0.8rem;">${p}: <strong>${q}</strong></span>`).join(' ');
+                const badge = m.type === 'RETURN'
+                    ? '<span class="badge-pending">↩️ مرتجع تالف</span>'
+                    : '<span class="badge-done">🚚 إرسال بديل</span>';
+
+                return `<tr>
+                    <td class="en-num">${m.date}</td>
+                    <td>${m.client}</td>
+                    <td>${badge}</td>
+                    <td style="text-align:right; max-width:360px;">${itemsText}</td>
+                    <td class="en-num" style="font-weight:800;">${m.totalQty}</td>
+                    <td>${m.note || '-'}</td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteMovement('${m.id}')">حذف</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function deleteMovement(id) {
+            if (!confirm('هل أنت متأكد من حذف هذه الحركة؟ سيتم تعديل الأرصدة المتبقية تلقائياً.')) return;
+            appState.movements = appState.movements.filter(m => m.id !== id);
+            saveState();
+            renderHistoryTable();
+            renderDashboardMatrix();
+            showToast('🗑️ تم حذف الحركة وتحديث الأرصدة');
+        }
+
+        // 5. الإعدادات: إدارة العملاء والأصناف (مع التعديل والحذف) + الرصيد الافتتاحي 22-11-2026
+        function renderSettingsLists() {
+            document.getElementById('clientsCountBadge').textContent = appState.clients.length;
+            document.getElementById('productsCountBadge').textContent = appState.products.length;
+
+            document.getElementById('clientsManageList').innerHTML = appState.clients.map((c, idx) => `
+                <div class="manage-item-row">
+                    <span class="manage-item-name">${c}</span>
+                    <button class="btn btn-edit btn-sm" onclick="editClientName(${idx})">✏️ تعديل</button>
+                    <button class="btn btn-danger btn-sm" onclick="removeClient(${idx})">حذف</button>
+                </div>
+            `).join('');
+
+            document.getElementById('productsManageList').innerHTML = appState.products.map((p, idx) => `
+                <div class="manage-item-row">
+                    <span class="manage-item-name">${p}</span>
+                    <button class="btn btn-edit btn-sm" onclick="editProductName(${idx})">✏️ تعديل</button>
+                    <button class="btn btn-danger btn-sm" onclick="removeProduct(${idx})">حذف</button>
+                </div>
+            `).join('');
+        }
+
+        function addNewClient() {
+            const inp = document.getElementById('newClientName');
+            const name = inp.value.trim();
+            if (!name) return;
+            if (appState.clients.some(c => c.toLowerCase() === name.toLowerCase())) {
+                showToast('⚠️ هذا العميل موجود بالفعل');
+                return;
+            }
+            appState.clients.push(name);
+            appState.openingBalances[name] = {};
+            appState.products.forEach(p => appState.openingBalances[name][p] = 0);
+            inp.value = '';
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('✅ تمت إضافة العميل بنجاح');
+        }
+
+        function editClientName(idx) {
+            const oldName = appState.clients[idx];
+            if (!oldName) return;
+            const newName = prompt('تعديل اسم العميل:', oldName);
+            if (newName === null) return;
+            const trimmed = newName.trim();
+            if (!trimmed || trimmed === oldName) return;
+            if (appState.clients.some((c, i) => i !== idx && c.toLowerCase() === trimmed.toLowerCase())) {
+                showToast('⚠️ يوجد عميل آخر بنفس هذا الاسم');
+                return;
+            }
+
+            appState.clients[idx] = trimmed;
+            appState.openingBalances[trimmed] = appState.openingBalances[oldName] || {};
+            delete appState.openingBalances[oldName];
+
+            appState.movements.forEach(m => {
+                if (m.client === oldName) m.client = trimmed;
+            });
+
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('✅ تم تعديل اسم العميل وتحديث سجلاته');
+        }
+
+        function removeClient(idx) {
+            const name = appState.clients[idx];
+            if (!name) return;
+            if (!confirm(`هل تريد حذف العميل "${name}"؟`)) return;
+            appState.clients.splice(idx, 1);
+            delete appState.openingBalances[name];
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('🗑️ تم حذف العميل');
+        }
+
+        function addNewProduct() {
+            const inp = document.getElementById('newProductName');
+            const name = inp.value.trim();
+            if (!name) return;
+            if (appState.products.some(p => p.toLowerCase() === name.toLowerCase())) {
+                showToast('⚠️ هذا الصنف موجود بالفعل');
+                return;
+            }
+            appState.products.push(name);
+            appState.unitPrices[name] = 0.500;
+            appState.clients.forEach(c => {
+                if (!appState.openingBalances[c]) appState.openingBalances[c] = {};
+                appState.openingBalances[c][name] = 0;
+            });
+            inp.value = '';
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('✅ تمت إضافة الصنف بنجاح');
+        }
+
+        function editProductName(idx) {
+            const oldName = appState.products[idx];
+            if (!oldName) return;
+            const newName = prompt('تعديل اسم الصنف:', oldName);
+            if (newName === null) return;
+            const trimmed = newName.trim();
+            if (!trimmed || trimmed === oldName) return;
+            if (appState.products.some((p, i) => i !== idx && p.toLowerCase() === trimmed.toLowerCase())) {
+                showToast('⚠️ يوجد صنف آخر بنفس هذا الاسم');
+                return;
+            }
+
+            appState.products[idx] = trimmed;
+            appState.unitPrices[trimmed] = appState.unitPrices[oldName] !== undefined ? appState.unitPrices[oldName] : 0.500;
+            delete appState.unitPrices[oldName];
+
+            appState.clients.forEach(c => {
+                if (appState.openingBalances[c]) {
+                    appState.openingBalances[c][trimmed] = appState.openingBalances[c][oldName] || 0;
+                    delete appState.openingBalances[c][oldName];
+                }
+            });
+
+            appState.movements.forEach(m => {
+                if (m.items && m.items[oldName] !== undefined) {
+                    m.items[trimmed] = m.items[oldName];
+                    delete m.items[oldName];
+                }
+            });
+
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('✅ تم تعديل اسم الصنف وتحديث سجلاته');
+        }
+
+        function removeProduct(idx) {
+            const name = appState.products[idx];
+            if (!name) return;
+            if (!confirm(`هل تريد حذف الصنف "${name}"؟`)) return;
+            appState.products.splice(idx, 1);
+            delete appState.unitPrices[name];
+            appState.clients.forEach(c => {
+                if (appState.openingBalances[c]) delete appState.openingBalances[c][name];
+            });
+            saveState();
+            renderSettingsLists();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('🗑️ تم حذف الصنف');
+        }
+
+        // جدول تعديل الرصيد الافتتاحي 22-11-2026 المنسق أفقياً بالكامل
+        function renderOpeningBalancesTable() {
+            const table = document.getElementById('openingBalancesTable');
+
+            let thead = '<thead><tr><th>العميل / المستشفى</th>';
+            appState.products.forEach(p => {
+                thead += `<th>${p}</th>`;
+            });
+            thead += '<th>الإجمالي</th></tr></thead>';
+
+            const colTotals = {};
+            appState.products.forEach(p => colTotals[p] = 0);
+            let grandOpenTotal = 0;
+
+            let tbody = '<tbody>';
+            appState.clients.forEach(c => {
+                let rowSum = 0;
+                tbody += `<tr><td title="${c}">${c}</td>`;
+                appState.products.forEach(p => {
+                    const val = (appState.openingBalances[c] && appState.openingBalances[c][p]) ? Number(appState.openingBalances[c][p]) : 0;
+                    rowSum += val;
+                    colTotals[p] += val;
+                    tbody += `<td>
+                        <input type="number" min="0" class="edit-bal-input" data-client="${c}" data-prod="${p}" value="${val || ''}" oninput="recalcOpeningTableTotals()">
+                    </td>`;
+                });
+                grandOpenTotal += rowSum;
+                tbody += `<td class="en-num row-open-total" style="font-weight:800; color:#EA580C;">${rowSum}</td></tr>`;
+            });
+
+            tbody += '<tr class="matrix-total-row"><td>إجمالي الأصناف</td>';
+            appState.products.forEach(p => {
+                tbody += `<td class="en-num col-open-total" data-prod="${p}">${colTotals[p]}</td>`;
+            });
+            tbody += `<td class="en-num" id="grandOpenFooterTotal">${grandOpenTotal}</td></tr></tbody>`;
+
+            table.innerHTML = thead + tbody;
+        }
+
+        function recalcOpeningTableTotals() {
+            const table = document.getElementById('openingBalancesTable');
+            const colTotals = {};
+            appState.products.forEach(p => colTotals[p] = 0);
+            let grand = 0;
+
+            table.querySelectorAll('tbody tr:not(.matrix-total-row)').forEach(tr => {
+                let rowSum = 0;
+                tr.querySelectorAll('input.edit-bal-input').forEach(inp => {
+                    const v = Math.max(0, parseInt(inp.value) || 0);
+                    rowSum += v;
+                    colTotals[inp.dataset.prod] += v;
+                });
+                tr.querySelector('.row-open-total').textContent = rowSum;
+                grand += rowSum;
+            });
+
+            table.querySelectorAll('.col-open-total').forEach(td => {
+                td.textContent = colTotals[td.dataset.prod] || 0;
+            });
+            const grandEl = document.getElementById('grandOpenFooterTotal');
+            if (grandEl) grandEl.textContent = grand;
+        }
+
+        function saveOpeningBalancesEdits() {
+            document.querySelectorAll('#openingBalancesTable input.edit-bal-input').forEach(inp => {
+                const c = inp.dataset.client;
+                const p = inp.dataset.prod;
+                const val = Math.max(0, parseInt(inp.value) || 0);
+                if (!appState.openingBalances[c]) appState.openingBalances[c] = {};
+                appState.openingBalances[c][p] = val;
+            });
+            saveState();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('✅ تم حفظ التعديلات على الرصيد الافتتاحي 22-11-2026');
+        }
+
+        function resetOpeningToExcelDefault() {
+            if (!confirm('هل تريد استعادة أرصدة 22-11-2026 كما كانت في ملف الإكسل الأصلي؟')) return;
+            appState.openingBalances = buildFullOpeningMap(appState.clients, appState.products, DEFAULT_OPENING_22_11_2026);
+            saveState();
+            renderOpeningBalancesTable();
+            renderDashboardMatrix();
+            renderReturnsValueTable();
+            showToast('↺ تمت استعادة الأرصدة الأصلية');
+        }
+
+        // النسخ الاحتياطي JSON
+        function downloadBackupJSON() {
+            appState.lastBackup = new Date().toISOString();
+            saveState();
+            const blob = new Blob([JSON.stringify(appState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const today = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `Fondant_Choco_Returns_Backup_${today}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('💾 تم تنزيل ملف النسخة الاحتياطية JSON');
+        }
+
+        function restoreBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (!parsed.clients || !parsed.products || !parsed.openingBalances) {
+                        throw new Error('ملف غير صالح');
+                    }
+                    appState = {
+                        openingDate: parsed.openingDate || '2026-11-22',
+                        clients: parsed.clients,
+                        products: parsed.products,
+                        unitPrices: buildPricesMap(parsed.products, parsed.unitPrices),
+                        openingBalances: parsed.openingBalances,
+                        movements: parsed.movements || [],
+                        lastBackup: parsed.lastBackup || new Date().toISOString()
+                    };
+                    saveState();
+                    renderDashboardMatrix();
+                    renderOpeningBalancesTable();
+                    renderHistoryTable();
+                    renderSettingsLists();
+                    renderReturnsValueTable();
+                    showToast('✅ تمت استعادة البيانات بنجاح');
+                } catch (err) {
+                    showToast('❌ خطأ: ملف النسخة الاحتياطية غير صحيح');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // تصدير Excel (.xlsx)
+        function exportToExcel() {
+            const { opening, remaining } = calculateBalances();
+            const wb = XLSX.utils.book_new();
+
+            const remRows = appState.clients.map(c => {
+                const row = { 'Client': c };
+                let total = 0;
+                appState.products.forEach(p => {
+                    row[p] = remaining[c][p];
+                    total += remaining[c][p];
+                });
+                row['Total Remaining'] = total;
+                return row;
+            });
+            const wsRem = XLSX.utils.json_to_sheet(remRows);
+            XLSX.utils.book_append_sheet(wb, wsRem, 'Remaining_Balances');
+
+            const openRows = appState.clients.map(c => {
+                const row = { 'Client': c };
+                let total = 0;
+                let valSum = 0;
+                appState.products.forEach(p => {
+                    const q = opening[c][p];
+                    const pr = appState.unitPrices[p] !== undefined ? Number(appState.unitPrices[p]) : 0.500;
+                    row[p] = q;
+                    total += q;
+                    valSum += q * pr;
+                });
+                row['Total Qty'] = total;
+                row['Total Value'] = Number(valSum.toFixed(3));
+                return row;
+            });
+            const wsOpen = XLSX.utils.json_to_sheet(openRows);
+            XLSX.utils.book_append_sheet(wb, wsOpen, 'Opening_19-21_to_22-11');
+
+            const movRows = appState.movements.map(m => ({
+                'Date': m.date,
+                'Client': m.client,
+                'Type': m.type === 'RETURN' ? 'Return (Expired)' : 'Sent (Replacement)',
+                'Total Qty': m.totalQty,
+                'Details': Object.entries(m.items).map(([k, v]) => `${k}: ${v}`).join(', '),
+                'Note': m.note || ''
+            }));
+            const wsMov = XLSX.utils.json_to_sheet(movRows.length ? movRows : [{ 'Info': 'No movements recorded yet' }]);
+            XLSX.utils.book_append_sheet(wb, wsMov, 'Daily_Movements');
+
+            const today = new Date().toISOString().slice(0, 10);
+            XLSX.writeFile(wb, `Fondant_Choco_Returns_${today}.xlsx`);
+            showToast('📊 تم تصدير ملف Excel بنجاح');
+        }
+
+        // تقرير الأرصدة المتبقية (PDF) باللغة الإنجليزية وعكس اتجاه الأعمدة: اسم المستشفى يسار والإجمالي يمين الجدول
+        async function exportToPDF() {
+            showToast('⏳ Preparing English PDF Report...');
+            const { remaining } = calculateBalances();
+
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '-9999px';
+            container.style.width = '794px';
+            container.style.background = '#ffffff';
+            container.style.direction = 'ltr';
+            container.style.fontFamily = "'Inter', sans-serif";
+            document.body.appendChild(container);
+
+            let currentPage;
+            const safeHeight = 1100;
+
+            function createPage() {
+                const p = document.createElement('div');
+                p.style.width = '794px';
+                p.style.padding = '28px';
+                p.style.background = '#ffffff';
+                p.style.boxSizing = 'border-box';
+                container.appendChild(p);
+                return p;
+            }
+
+            const today = new Date().toISOString().slice(0, 10);
+            currentPage = createPage();
+            currentPage.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:3px solid #F97316; padding-bottom:12px; margin-bottom:16px;">
+                    <div>
+                        <h2 style="color:#EA580C; margin:0; font-size:20px;">Fondant Choco - Remaining Balances Report</h2>
+                        <p style="margin:4px 0 0; color:#555; font-size:12px;">Report Date: ${today} | Opening Base Date: 22-11-2026</p>
+                    </div>
+                    <img src="https://i.postimg.cc/WbJw6TdV/Orig-LOGO-Square.jpg" style="width:50px; height:50px; border-radius:8px;">
+                </div>
+            `;
+
+            const tableWrap = document.createElement('div');
+            const tableHtml = `
+                <table style="width:100%; border-collapse:collapse; font-size:11px; direction:ltr;">
+                    <thead>
+                        <tr style="background:#F97316; color:white;">
+                            <th style="padding:7px; border:1px solid #ddd; text-align:left; width:215px;">Hospital / Client</th>
+                            <th style="padding:7px; border:1px solid #ddd; text-align:left;">Remaining Items Details</th>
+                            <th style="padding:7px; border:1px solid #ddd; text-align:right; width:80px;">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>`;
+            tableWrap.innerHTML = tableHtml;
+            currentPage.appendChild(tableWrap);
+
+            let tbody = tableWrap.querySelector('tbody');
+            let grandTotal = 0;
+
+            appState.clients.forEach(c => {
+                let clientSum = 0;
+                const activeItems = [];
+                appState.products.forEach(p => {
+                    const val = remaining[c][p] || 0;
+                    if (val !== 0) {
+                        clientSum += val;
+                        activeItems.push(`${p}: ${val}`);
+                    }
+                });
+                grandTotal += clientSum;
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="padding:7px; border:1px solid #FED7AA; font-weight:700; color:#EA580C; text-align:left;">${c}</td>
+                    <td style="padding:7px; border:1px solid #FED7AA; text-align:left;">${activeItems.length ? activeItems.join(' | ') : '0 (Settled)'}</td>
+                    <td style="padding:7px; border:1px solid #FED7AA; text-align:right; font-weight:800; background:#FFF7ED;">${clientSum}</td>
+                `;
+                tbody.appendChild(tr);
+
+                if (currentPage.offsetHeight > safeHeight) {
+                    tbody.removeChild(tr);
+                    currentPage = createPage();
+                    const newTableWrap = document.createElement('div');
+                    newTableWrap.innerHTML = tableHtml;
+                    currentPage.appendChild(newTableWrap);
+                    tbody = newTableWrap.querySelector('tbody');
+                    tbody.appendChild(tr);
+                }
+            });
+
+            const totalRow = document.createElement('tr');
+            totalRow.innerHTML = `
+                <td colspan="2" style="padding:8px; border:1px solid #F97316; background:#FFEDD5; font-weight:800; color:#EA580C; text-align:left;">Grand Total Remaining</td>
+                <td style="padding:8px; border:1px solid #F97316; background:#F97316; color:#fff; text-align:right; font-weight:800;">${grandTotal}</td>
+            `;
+            tbody.appendChild(totalRow);
+
+            try {
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'pt', 'a4');
+                const imgWidth = pdf.internal.pageSize.getWidth();
+                const pages = Array.from(container.children);
+
+                for (let i = 0; i < pages.length; i++) {
+                    const canvas = await html2canvas(pages[i], { scale: 2, useCORS: true });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, imgHeight);
+                }
+
+                pdf.save(`Fondant_Choco_Remaining_Balances_${today}.pdf`);
+                showToast('📄 English PDF report exported successfully');
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                showToast('❌ Error generating PDF');
+            } finally {
+                document.body.removeChild(container);
+            }
+        }
+
+        // التهيئة عند فتح الصفحة
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            const todayStr = new Date().toISOString().slice(0, 10);
+            document.getElementById('movDate').value = todayStr;
+            renderDashboardMatrix();
+            renderMovementItemsGrid();
+            renderReturnsValueTable();
+        });
     </script>
 </body>
 </html>
